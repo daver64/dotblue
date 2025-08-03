@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <atomic>
 #include <iostream>
-
+#include <DotBlue/GLPlatform.h>
 namespace DotBlue {
 Display* display = nullptr;
 Window win = 0;
@@ -119,7 +119,7 @@ void RunWindow(std::atomic<bool>& running) {
             }
         }
     }
-    InitApp();
+    DotBlue::InitApp();
     // Main loop
     while (running) {
         while (XPending(display)) {

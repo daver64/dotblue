@@ -6,11 +6,13 @@
 #include <GL/glx.h>
 #include <GL/gl.h>
 #include <GL/glxext.h>
-
+const char* default_font_str="/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf";
 #elif defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
 #include <gl/GL.h>
 #include <DotBlue/wglext.h>
+const char* default_font_str="C:/Windows/Fonts/arial.ttf"
+extern HDC glapp_hdc;
 #endif
 #include <DotBlue/GLPlatform.h>
 #include <chrono>
@@ -19,12 +21,12 @@
 
 namespace DotBlue
 {
-    extern HDC glapp_hdc;
+    
     std::string gTimingInfo;
     GLFont glapp_default_font = {};
     void InitApp()
     {
-        glapp_default_font = LoadFont("C:/Windows/Fonts/arial.ttf");
+        glapp_default_font = LoadFont(default_font_str);
     }
     void UpdateAndRender()
     {
