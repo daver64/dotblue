@@ -1,6 +1,7 @@
 #include "DotBlue/DotBlue.h"
 #include "DotBlue/MemChunkAllocator.h"
 #include "DotBlue/ColourConsole.h"
+#include "DotBlue/GLPlatform.h"
 #include <iostream>
 #include <cstring>
 
@@ -51,6 +52,13 @@ int Console_Test()
     std::cout << "Cursor was at: (" << x << "," << y << ")" << std::endl;
 
     DotBlue::ColourConsole::showCursor();
+    return 0;   
+}
+
+int GL_Test() 
+{
+    std::atomic<bool> running(true);
+    DotBlue::run_window(running);
     return 0;   
 }
 

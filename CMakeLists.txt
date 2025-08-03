@@ -20,6 +20,8 @@ endif()
 add_library(DotBlue ${LIB_TYPE}
     src/DotBlue.cpp
     src/MemChunkAllocator.cpp
+    src/GLPlatformWin32.cpp
+    src/GLPlatformUnix.cpp
 )
 
 # Export symbols (for shared)
@@ -42,10 +44,21 @@ target_include_directories(DotBlue PUBLIC
 )
 
 # Optional test app
+# Optional test app
 if(BUILD_TESTS)
     add_executable(DotBlueTest test/main.cpp)
+    target_include_directories(DotBlueTest PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    )
+    target_link_libraries(DotBlueTest PRIVATE DotBlue) # <-- Add this line
+
     if(MSVC)
-    target_compile_definitions(DotBlue PRIVATE _CRT_SECURE_NO_WARNINGS)
+        target_compile_definitions(DotBlue PRIVATE _CRT_SECURE_NO_WARNINGS)
+    elseif(UNIX AND NOT APPLE)
+        target_link_libraries(DotBlueTest PRIVATE
+            opengl32GL
+            X11
+            pthread
+            dl)
     endif()
-    target_link_libraries(DotBlueTest PRIVATE DotBlue)
 endif()
