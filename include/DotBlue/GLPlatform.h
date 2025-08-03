@@ -22,7 +22,7 @@ namespace DotBlue
     void UpdateAndRender();
     void GLSwapBuffers();
     void GLSleep(int ms);
-    GLFont LoadFont(const char *fontPath, float pixelHeight = 24.0f);
+    GLFont LoadFont(const char *fontPath, float pixelHeight = 14.0f);
     void GLPrintf(const GLFont &font, float x, float y, const RGBA &color, const char *fmt, ...);
     float GetCharHeight(const GLFont &font, char c);
     float GetCharWidth(const GLFont &font, char c);
