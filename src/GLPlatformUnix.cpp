@@ -4,6 +4,8 @@
 #include <X11/Xutil.h>
 #include <GL/glx.h>
 #include <GL/gl.h>
+#include <GL/glxext.h> // <-- Add this for glXCreateContextAttribsARB
+//#include "DotBlue/wglext.h"
 #include <unistd.h>
 #include <atomic>
 #include <iostream>
@@ -43,8 +45,51 @@ void run_window(std::atomic<bool>& running) {
     XStoreName(display, win, "OpenGL Window");
     XMapWindow(display, win);
 
-    GLXContext glc = glXCreateContext(display, vi, nullptr, GL_TRUE);
-    glXMakeCurrent(display, win, glc);
+    // Create legacy context first
+    GLXContext legacyCtx = glXCreateContext(display, vi, nullptr, GL_TRUE);
+    glXMakeCurrent(display, win, legacyCtx);
+
+    // Get glXCreateContextAttribsARB
+    typedef GLXContext(*PFNGLXCREATECONTEXTATTRIBSARBPROC)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
+    PFNGLXCREATECONTEXTATTRIBSARBPROC glXCreateContextAttribsARB = nullptr;
+    glXCreateContextAttribsARB = (PFNGLXCREATECONTEXTATTRIBSARBPROC)
+        glXGetProcAddressARB((const GLubyte*)"glXCreateContextAttribsARB");
+
+    GLXContext modernCtx = nullptr;
+
+    if (glXCreateContextAttribsARB) {
+        int fbcount = 0;
+        static int visual_attribs[] = {
+            GLX_X_RENDERABLE    , True,
+            GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
+            GLX_RENDER_TYPE     , GLX_RGBA_BIT,
+            GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
+            GLX_RED_SIZE        , 8,
+            GLX_GREEN_SIZE      , 8,
+            GLX_BLUE_SIZE       , 8,
+            GLX_ALPHA_SIZE      , 8,
+            GLX_DEPTH_SIZE      , 24,
+            GLX_STENCIL_SIZE    , 8,
+            GLX_DOUBLEBUFFER    , True,
+            None
+        };
+        GLXFBConfig* fbc = glXChooseFBConfig(display, DefaultScreen(display), visual_attribs, &fbcount);
+        if (fbc && fbcount > 0) {
+            int context_attribs[] = {
+                GLX_CONTEXT_MAJOR_VERSION_ARB, 4,
+                GLX_CONTEXT_MINOR_VERSION_ARB, 4,
+                GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
+                None
+            };
+            modernCtx = glXCreateContextAttribsARB(display, fbc[0], nullptr, True, context_attribs);
+            if (modernCtx) {
+                glXMakeCurrent(display, None, nullptr);
+                glXDestroyContext(display, legacyCtx);
+                glXMakeCurrent(display, win, modernCtx);
+            }
+            XFree(fbc);
+        }
+    }
 
     while (running) {
         while (XPending(display)) {
@@ -63,10 +108,13 @@ void run_window(std::atomic<bool>& running) {
     }
 
     glXMakeCurrent(display, None, nullptr);
-    glXDestroyContext(display, glc);
+    if (modernCtx) {
+        glXDestroyContext(display, modernCtx);
+    } else {
+        glXDestroyContext(display, legacyCtx);
+    }
     XDestroyWindow(display, win);
     XCloseDisplay(display);
 }
 }
-
 #endif

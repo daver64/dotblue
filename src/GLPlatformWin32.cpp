@@ -3,8 +3,10 @@
 #include <DotBlue/DotBlue.h>
 #include <windows.h>
 #include <gl/GL.h>
+#include "DotBlue/wglext.h"
 #include <atomic>
 #include <iostream>
+#include <vector>
 #undef UNICODE
 #undef _UNICODE
 
@@ -17,6 +19,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
     }
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
+
+// WGL extension function pointers
+typedef HGLRC(WINAPI* PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC, HGLRC, const int*);
+typedef BOOL(WINAPI* PFNWGLCHOOSEPIXELFORMATARBPROC)(HDC, const int*, const FLOAT*, UINT, int*, UINT*);
 
 namespace DotBlue {
 
@@ -47,11 +53,52 @@ void run_window(std::atomic<bool>& running)
     int format = ChoosePixelFormat(hdc, &pfd);
     SetPixelFormat(hdc, format, &pfd);
 
+    // Create legacy context first
     HGLRC tempContext = wglCreateContext(hdc);
     wglMakeCurrent(hdc, tempContext);
 
-    // Load WGL extensions to get OpenGL 3.3 context (omitted for brevity)
-    // For this minimal example, we keep legacy context
+    // Load WGL extension functions
+    PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = 
+        (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
+    PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB =
+        (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
+
+    HGLRC modernContext = nullptr;
+    int pixelFormat = format;
+
+    if (wglCreateContextAttribsARB && wglChoosePixelFormatARB) {
+        // Specify attributes for modern pixel format
+        const int pixelAttribs[] = {
+            WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
+            WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
+            WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
+            WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
+            WGL_COLOR_BITS_ARB, 24,
+            WGL_DEPTH_BITS_ARB, 24,
+            WGL_STENCIL_BITS_ARB, 8,
+            0
+        };
+        UINT numFormats;
+        int formats[1];
+        if (wglChoosePixelFormatARB(hdc, pixelAttribs, nullptr, 1, formats, &numFormats) && numFormats > 0) {
+            pixelFormat = formats[0];
+            SetPixelFormat(hdc, pixelFormat, &pfd);
+        }
+
+        // Specify context attributes for OpenGL 4.4
+        const int contextAttribs[] = {
+            WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
+            WGL_CONTEXT_MINOR_VERSION_ARB, 4,
+            WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+            0
+        };
+        modernContext = wglCreateContextAttribsARB(hdc, 0, contextAttribs);
+        if (modernContext) {
+            wglMakeCurrent(nullptr, nullptr);
+            wglDeleteContext(tempContext);
+            wglMakeCurrent(hdc, modernContext);
+        }
+    }
 
     while (running) 
     {
@@ -74,7 +121,11 @@ void run_window(std::atomic<bool>& running)
     }
 
     wglMakeCurrent(nullptr, nullptr);
-    wglDeleteContext(tempContext);
+    if (modernContext) {
+        wglDeleteContext(modernContext);
+    } else {
+        wglDeleteContext(tempContext);
+    }
     ReleaseDC(hwnd, hdc);
     DestroyWindow(hwnd);
 }
