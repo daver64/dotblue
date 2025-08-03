@@ -56,7 +56,7 @@ if(BUILD_TESTS)
         target_compile_definitions(DotBlue PRIVATE _CRT_SECURE_NO_WARNINGS)
     elseif(UNIX AND NOT APPLE)
         target_link_libraries(DotBlueTest PRIVATE
-            opengl32GL
+            GL
             X11
             pthread
             dl)
