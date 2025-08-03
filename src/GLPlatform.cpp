@@ -1,3 +1,4 @@
+
 #include "DotBlue/DotBlue.h"
 #include "DotBlue/GLPlatform.h"
 #if defined(__linux__) || defined(__FreeBSD__)
@@ -17,17 +18,20 @@ extern HDC glapp_hdc;
 #include <DotBlue/GLPlatform.h>
 #include <chrono>
 #include <string>
-
+#include <iostream>
 
 namespace DotBlue
 {
     
     std::string gTimingInfo;
     GLFont glapp_default_font = {};
+    unsigned int texid=0;
     void InitApp()
     {
         glapp_default_font = LoadFont(default_font_str);
         SetApplicationTitle("DotBlueTheBlue!!");
+        texid=DotBlue::LoadPNGTexture("../bud.png");
+        std::cout << "Texture id of bud.png:" << texid << std::endl;
     }
     void UpdateAndRender()
     {
@@ -35,7 +39,7 @@ namespace DotBlue
         RGBA red{1.0,0.0,0.0,1.0};
         RGBA green{0.0,1.0,0.0,1.0};
         RGBA blue{0.0,0.0,1.0,1.0};
-
+        RGBA white{1.0,1.0,1.0,1.0};
         int width = 800, height = 600; // You may want to make these dynamic
 
         // Set up orthographic projection for 2D text rendering
@@ -53,6 +57,8 @@ namespace DotBlue
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+        glColor4f(white.r, white.g, white.b, white.a);
+        TexturedQuad(texid, 100, 100, 300, 300);
         // Now render text at pixel coordinates
         GLPrintf(glapp_default_font, 100, 100, green, gTimingInfo.c_str());
         GLSwapBuffers();

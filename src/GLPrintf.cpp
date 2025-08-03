@@ -27,6 +27,7 @@
 #include <cstdio>
 #include <utility>
 #include <string>
+#include "DotBlue/stb_image.h"
 
 namespace DotBlue
 {
