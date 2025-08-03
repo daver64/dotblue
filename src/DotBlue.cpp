@@ -2,9 +2,11 @@
 #include "DotBlue/MemChunkAllocator.h"
 #include <iostream>
 #include <cstring>
+
 namespace DotBlue {
 
-void Hello() {
+void Hello() 
+{
 #if defined(DOTBLUE_WINDOWS)
     std::cout << "Hello from Windows!" << std::endl;
 #elif defined(DOTBLUE_LINUX)
@@ -17,7 +19,8 @@ void Hello() {
 }
 
 
-int DB_Test() {
+int DB_Test() 
+{
     DotBlue::MemChunkAllocator allocator("mapped_data.bin", 1024 * 1024, 64); // 1 MB, 64-byte chunks
 
     void* ptr = allocator.allocate();

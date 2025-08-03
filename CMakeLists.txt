@@ -44,5 +44,8 @@ target_include_directories(DotBlue PUBLIC
 # Optional test app
 if(BUILD_TESTS)
     add_executable(DotBlueTest test/main.cpp)
+    if(MSVC)
+    target_compile_definitions(DotBlue PRIVATE _CRT_SECURE_NO_WARNINGS)
+    endif()
     target_link_libraries(DotBlueTest PRIVATE DotBlue)
 endif()
