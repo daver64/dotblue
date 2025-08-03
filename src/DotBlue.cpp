@@ -1,7 +1,7 @@
 #include "DotBlue/DotBlue.h"
 #include "DotBlue/MemChunkAllocator.h"
 #include <iostream>
-
+#include <cstring>
 namespace DotBlue {
 
 void Hello() {
@@ -16,15 +16,13 @@ void Hello() {
 #endif
 }
 
-#include "DotBlue/MemChunkAllocator.h"
-#include <iostream>
 
 int DB_Test() {
     DotBlue::MemChunkAllocator allocator("mapped_data.bin", 1024 * 1024, 64); // 1 MB, 64-byte chunks
 
     void* ptr = allocator.allocate();
     if (ptr) {
-        strcpy((char*)ptr, "Hello, mapped memory!");
+        std::strcpy((char*)ptr, "Hello, mapped memory!");
         std::cout << (char*)ptr << "\n";
         allocator.free(ptr);
     }
