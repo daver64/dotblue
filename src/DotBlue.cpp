@@ -1,5 +1,6 @@
 #include "DotBlue/DotBlue.h"
 #include "DotBlue/MemChunkAllocator.h"
+#include "DotBlue/ColourConsole.h"
 #include <iostream>
 #include <cstring>
 
@@ -31,6 +32,26 @@ int DB_Test()
     }
 
     return 0;
+}
+
+int Console_Test()
+{
+    DotBlue::ColourConsole::resize(100, 40);
+    DotBlue::ColourConsole::clear();
+    DotBlue::ColourConsole::hideCursor();
+
+    DotBlue::ColourConsole::setColour(DotBlue::ConsoleColour::BrightGreen);
+    DotBlue::ColourConsole::gotoxy(10, 5);
+    std::cout << "Hello in colour at (10,5)!";
+
+    int x, y;
+    ColourConsole::getxy(x, y);
+    DotBlue::ColourConsole::reset();
+    DotBlue::ColourConsole::gotoxy(0, y + 2);
+    std::cout << "Cursor was at: (" << x << "," << y << ")" << std::endl;
+
+    DotBlue::ColourConsole::showCursor();
+    return 0;   
 }
 
 }
