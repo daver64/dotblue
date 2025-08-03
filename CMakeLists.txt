@@ -19,6 +19,7 @@ endif()
 # Define the library
 add_library(DotBlue ${LIB_TYPE}
     src/DotBlue.cpp
+    src/MemChunkAllocator.cpp
 )
 
 # Export symbols (for shared)

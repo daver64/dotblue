@@ -18,4 +18,5 @@
 
 namespace DotBlue {
     DOTBLUE_API void Hello();
+    DOTBLUE_API int DB_Test();
 }
