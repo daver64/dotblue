@@ -25,6 +25,9 @@
 #include <atomic>
 #include <cstdarg>
 #include <cstdio>
+#include <utility>
+#include <string>
+
 namespace DotBlue
 {
 
@@ -35,7 +38,8 @@ namespace DotBlue
         std::ifstream file(fontPath, std::ios::binary);
         std::vector<unsigned char> ttfBuffer((std::istreambuf_iterator<char>(file)), {});
 
-        if (ttfBuffer.empty()) {
+        if (ttfBuffer.empty()) 
+        {
             std::cerr << "Failed to load font file: " << fontPath << std::endl;
             return font; // Return empty font, nothing will render
         }
@@ -48,7 +52,8 @@ namespace DotBlue
             bitmap.data(), texWidth, texHeight,
             32, 96, font.cdata);
 
-        if (bakeResult <= 0) {
+        if (bakeResult <= 0) 
+        {
             std::cerr << "stbtt_BakeFontBitmap failed for font: " << fontPath << std::endl;
             return font;
         }
@@ -114,5 +119,36 @@ namespace DotBlue
     {
         std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
     }
+
+    float GetCharWidth(const GLFont& font, char c) 
+    {
+        if (c < 32 || c > 126) return 0.0f;
+        return font.cdata[c - 32].xadvance;
+    }
+
+    float GetCharHeight(const GLFont& font, char c) 
+    {
+        if (c < 32 || c > 126) return 0.0f;
+        stbtt_aligned_quad q;
+        float x = 0.0f, y = 0.0f;
+        stbtt_GetBakedQuad(font.cdata, font.width, font.height, c - 32, &x, &y, &q, 1);
+        return q.y1 - q.y0;
+    }
+
+    std::pair<float, float> GetStringDimensions(const GLFont& font, 
+        const std::string& str) 
+        {
+        float width = 0.0f;
+        float maxHeight = 0.0f;
+        for (char c : str) 
+        {
+            if (c < 32 || c > 126) continue;
+            width += font.cdata[c - 32].xadvance;
+            float charHeight = GetCharHeight(font, c);
+            if (charHeight > maxHeight) maxHeight = charHeight;
+        }
+        return {width, maxHeight};
+    }
+
 }
 

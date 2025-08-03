@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <atomic>
 #include <iostream>
+#include <string>
 #include <DotBlue/GLPlatform.h>
 namespace DotBlue {
 Display* display = nullptr;
@@ -144,5 +145,16 @@ void RunWindow(std::atomic<bool>& running) {
     if (fbc) XFree(fbc);
     XCloseDisplay(display);
 }
+
+extern Display* display;
+extern Window win;
+
+void SetApplicationTitle(const std::string& title) {
+    if (display && win) {
+        XStoreName(display, win, title.c_str());
+        XFlush(display);
+    }
+}
+
 }
 #endif

@@ -8,6 +8,7 @@
 #include <atomic>
 #include <iostream>
 #include <vector>
+#include <string>
 #undef UNICODE
 #undef _UNICODE
 
@@ -140,5 +141,13 @@ void RunWindow(std::atomic<bool>& running)
     ReleaseDC(hwnd, hdc);
     DestroyWindow(hwnd);
 }
+
+void SetApplicationTitle(const std::string& title) {
+    HWND hwnd = GetActiveWindow();
+    if (hwnd) {
+        SetWindowTextA(hwnd, title.c_str());
+    }
+}
+
 }
 #endif

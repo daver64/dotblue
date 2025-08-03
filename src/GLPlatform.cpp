@@ -11,7 +11,7 @@ const char* default_font_str="/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf";
 #include <windows.h>
 #include <gl/GL.h>
 #include <DotBlue/wglext.h>
-const char* default_font_str="C:/Windows/Fonts/arial.ttf"
+const char* default_font_str="C:/Windows/Fonts/arial.ttf";
 extern HDC glapp_hdc;
 #endif
 #include <DotBlue/GLPlatform.h>
@@ -27,6 +27,7 @@ namespace DotBlue
     void InitApp()
     {
         glapp_default_font = LoadFont(default_font_str);
+        SetApplicationTitle("DotBlueTheBlue!!");
     }
     void UpdateAndRender()
     {
