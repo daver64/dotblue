@@ -1,7 +1,26 @@
 #pragma once
 #include <atomic>
+#include "stb_truetype.h"
+#ifndef GL_CLAMP_TO_EDGE
+#define GL_CLAMP_TO_EDGE 0x812F
+#endif
 namespace DotBlue {
-
-    void run_window(std::atomic<bool>& running);
+    struct GLFont
+    {
+        unsigned int textureID;
+        int width, height;
+        stbtt_bakedchar cdata[96]; // ASCII 32..126
+    };
+    struct RGBA
+    {
+        float r, g, b, a;
+    };
+    void InitApp();
+    void RunWindow(std::atomic<bool>& running);
+    void UpdateAndRender();
+    void GLSwapBuffers();
+    void GLSleep(int ms);
+    GLFont LoadFont(const char* fontPath, float pixelHeight = 24.0f);
+    void GLPrintf(const GLFont& font, float x, float y, const RGBA& color, const char* fmt, ...);
 
 } // namespace DotBlue

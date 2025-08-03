@@ -10,8 +10,19 @@
 #include <iostream>
 
 namespace DotBlue {
-void run_window(std::atomic<bool>& running) {
-    Display* display = XOpenDisplay(nullptr);
+Display* display = nullptr;
+Window win = 0;
+void GLSwapBuffers()
+{
+    glXSwapBuffers(display, win);
+}
+void GLSleep(int ms)
+{
+    usleep(ms * 1000);
+}
+
+void RunWindow(std::atomic<bool>& running) {
+    display = XOpenDisplay(nullptr);
     if (!display) {
         std::cerr << "Cannot open X display\n";
         return;
@@ -39,7 +50,7 @@ void run_window(std::atomic<bool>& running) {
     GLXFBConfig* fbc = glXChooseFBConfig(display, screen, visual_attribs, &fbcount);
 
     XVisualInfo* vi = nullptr;
-    Window win = 0;
+    win = 0;
     Colormap cmap;
     XSetWindowAttributes swa;
 
@@ -95,7 +106,7 @@ void run_window(std::atomic<bool>& running) {
             int context_attribs[] = {
                 GLX_CONTEXT_MAJOR_VERSION_ARB, majorVersions[i],
                 GLX_CONTEXT_MINOR_VERSION_ARB, minorVersions[i],
-                GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
+                GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, // <--- Use COMPATIBILITY
                 None
             };
             modernCtx = glXCreateContextAttribsARB(display, fbc[0], nullptr, True, context_attribs);
@@ -108,7 +119,7 @@ void run_window(std::atomic<bool>& running) {
             }
         }
     }
-
+    InitApp();
     // Main loop
     while (running) {
         while (XPending(display)) {
@@ -118,11 +129,7 @@ void run_window(std::atomic<bool>& running) {
                 running = false;
             }
         }
-        glViewport(0, 0, 800, 600);
-        glClearColor(0.2f, 0.3f, 0.4f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glXSwapBuffers(display, win);
-        usleep(16000);
+        DotBlue::UpdateAndRender();
     }
 
     glXMakeCurrent(display, None, nullptr);

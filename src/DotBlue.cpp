@@ -58,7 +58,7 @@ int Console_Test()
 int GL_Test() 
 {
     std::atomic<bool> running(true);
-    DotBlue::run_window(running);
+    DotBlue::RunWindow(running);
     return 0;   
 }
 

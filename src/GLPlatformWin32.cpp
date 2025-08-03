@@ -1,6 +1,7 @@
 // platform_win32.cpp
 #ifdef _WIN32
 #include <DotBlue/DotBlue.h>
+#include <DotBlue/GLPlatform.h>
 #include <windows.h>
 #include <gl/GL.h>
 #include <DotBlue/wglext.h>
@@ -25,8 +26,16 @@ typedef HGLRC(WINAPI* PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC, HGLRC, const int*)
 typedef BOOL(WINAPI* PFNWGLCHOOSEPIXELFORMATARBPROC)(HDC, const int*, const FLOAT*, UINT, int*, UINT*);
 
 namespace DotBlue {
+HDC glapp_hdc;
+void GLSwapBuffers()
+{
+    SwapBuffers(glapp_hdc);
+}
+void GLSleep(int ms)
+{
 
-void run_window(std::atomic<bool>& running) 
+}
+void RunWindow(std::atomic<bool>& running) 
 {
     WNDCLASS wc = {};
     wc.lpfnWndProc = WindowProc;
@@ -42,7 +51,7 @@ void run_window(std::atomic<bool>& running)
         nullptr, nullptr, wc.hInstance, nullptr);
 
     HDC hdc = GetDC(hwnd);
-
+    glapp_hdc = hdc;
     PIXELFORMATDESCRIPTOR pfd = {};
     pfd.nSize = sizeof(pfd);
     pfd.nVersion = 1;
@@ -89,9 +98,9 @@ void run_window(std::atomic<bool>& running)
         int minorVersions[] = {4, 3, 2, 1, 3, 0};
         for (int i = 0; i < 6; ++i) {
             const int contextAttribs[] = {
-                WGL_CONTEXT_MAJOR_VERSION_ARB, majorVersions[i],
-                WGL_CONTEXT_MINOR_VERSION_ARB, minorVersions[i],
-                WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+                WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
+                WGL_CONTEXT_MINOR_VERSION_ARB, 4,
+                WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, // <--- Use COMPATIBILITY
                 0
             };
             modernContext = wglCreateContextAttribsARB(hdc, 0, contextAttribs);
@@ -105,6 +114,7 @@ void run_window(std::atomic<bool>& running)
         }
     }
 
+    InitApp();
     while (running) 
     {
         MSG msg;
@@ -118,11 +128,7 @@ void run_window(std::atomic<bool>& running)
             DispatchMessage(&msg);
         }
 
-        glViewport(0, 0, 800, 600);
-        glClearColor(0.2f, 0.3f, 0.4f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        SwapBuffers(hdc);
-        Sleep(16);
+        DotBlue::UpdateAndRender();
     }
 
     wglMakeCurrent(nullptr, nullptr);
