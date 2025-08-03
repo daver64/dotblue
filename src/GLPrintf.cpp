@@ -10,7 +10,7 @@
 #include <iostream>
 #undef UNICODE
 #undef _UNICODE
-#else if defined(__linux__) || defined(__FreeBSD__)
+#elif defined(__linux__) || defined(__FreeBSD__)
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <GL/glx.h>
