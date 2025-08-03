@@ -22,6 +22,7 @@ add_library(DotBlue ${LIB_TYPE}
     src/MemChunkAllocator.cpp
     src/GLPlatformWin32.cpp
     src/GLPlatformUnix.cpp
+    src/GLPrintf.cpp
 )
 
 # Export symbols (for shared)

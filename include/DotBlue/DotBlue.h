@@ -15,8 +15,15 @@
     #define DOTBLUE_API __attribute__((visibility("default")))
   #endif
 #endif
-
+#include "stb_truetype.h"
 namespace DotBlue {
+
+struct GLFont {
+    unsigned int textureID;
+    int width, height;
+    stbtt_bakedchar cdata[96]; // ASCII 32..126
+};
+
     DOTBLUE_API void Hello();
     DOTBLUE_API int DB_Test();
     DOTBLUE_API int Console_Test();
