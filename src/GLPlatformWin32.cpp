@@ -3,7 +3,7 @@
 #include <DotBlue/DotBlue.h>
 #include <windows.h>
 #include <gl/GL.h>
-#include "DotBlue/wglext.h"
+#include <DotBlue/wglext.h>
 #include <atomic>
 #include <iostream>
 #include <vector>
@@ -64,7 +64,6 @@ void run_window(std::atomic<bool>& running)
         (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
 
     HGLRC modernContext = nullptr;
-    int pixelFormat = format;
 
     if (wglCreateContextAttribsARB && wglChoosePixelFormatARB) {
         // Specify attributes for modern pixel format
@@ -81,22 +80,28 @@ void run_window(std::atomic<bool>& running)
         UINT numFormats;
         int formats[1];
         if (wglChoosePixelFormatARB(hdc, pixelAttribs, nullptr, 1, formats, &numFormats) && numFormats > 0) {
-            pixelFormat = formats[0];
-            SetPixelFormat(hdc, pixelFormat, &pfd);
+            // Only set pixel format if it hasn't been set yet
+            // SetPixelFormat(hdc, formats[0], &pfd); // REMOVE this line!
         }
 
-        // Specify context attributes for OpenGL 4.4
-        const int contextAttribs[] = {
-            WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
-            WGL_CONTEXT_MINOR_VERSION_ARB, 4,
-            WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-            0
-        };
-        modernContext = wglCreateContextAttribsARB(hdc, 0, contextAttribs);
-        if (modernContext) {
-            wglMakeCurrent(nullptr, nullptr);
-            wglDeleteContext(tempContext);
-            wglMakeCurrent(hdc, modernContext);
+        // Try to create the highest available context (4.4 down to 3.3)
+        int majorVersions[] = {4, 4, 4, 4, 3, 3};
+        int minorVersions[] = {4, 3, 2, 1, 3, 0};
+        for (int i = 0; i < 6; ++i) {
+            const int contextAttribs[] = {
+                WGL_CONTEXT_MAJOR_VERSION_ARB, majorVersions[i],
+                WGL_CONTEXT_MINOR_VERSION_ARB, minorVersions[i],
+                WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+                0
+            };
+            modernContext = wglCreateContextAttribsARB(hdc, 0, contextAttribs);
+            if (modernContext) {
+                wglMakeCurrent(nullptr, nullptr);
+                wglDeleteContext(tempContext);
+                wglMakeCurrent(hdc, modernContext);
+                std::cout << "Created OpenGL context version " << majorVersions[i] << "." << minorVersions[i] << std::endl;
+                break;
+            }
         }
     }
 

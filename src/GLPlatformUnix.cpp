@@ -4,8 +4,7 @@
 #include <X11/Xutil.h>
 #include <GL/glx.h>
 #include <GL/gl.h>
-#include <GL/glxext.h> // <-- Add this for glXCreateContextAttribsARB
-//#include "DotBlue/wglext.h"
+#include <GL/glxext.h>
 #include <unistd.h>
 #include <atomic>
 #include <iostream>
@@ -18,29 +17,61 @@ void run_window(std::atomic<bool>& running) {
         return;
     }
 
+    int screen = DefaultScreen(display);
     Window root = DefaultRootWindow(display);
 
-    GLint attributes[] = {
-        GLX_RGBA,
-        GLX_DEPTH_SIZE, 24,
-        GLX_DOUBLEBUFFER,
+    // Try to get a modern FBConfig
+    int fbcount = 0;
+    static int visual_attribs[] = {
+        GLX_X_RENDERABLE    , True,
+        GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
+        GLX_RENDER_TYPE     , GLX_RGBA_BIT,
+        GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
+        GLX_RED_SIZE        , 8,
+        GLX_GREEN_SIZE      , 8,
+        GLX_BLUE_SIZE       , 8,
+        GLX_ALPHA_SIZE      , 8,
+        GLX_DEPTH_SIZE      , 24,
+        GLX_STENCIL_SIZE    , 8,
+        GLX_DOUBLEBUFFER    , True,
         None
     };
+    GLXFBConfig* fbc = glXChooseFBConfig(display, screen, visual_attribs, &fbcount);
 
-    XVisualInfo* vi = glXChooseVisual(display, 0, attributes);
-    if (!vi) {
-        std::cerr << "No appropriate visual found\n";
-        return;
-    }
-
-    Colormap cmap = XCreateColormap(display, root, vi->visual, AllocNone);
+    XVisualInfo* vi = nullptr;
+    Window win = 0;
+    Colormap cmap;
     XSetWindowAttributes swa;
-    swa.colormap = cmap;
-    swa.event_mask = ExposureMask | KeyPressMask | StructureNotifyMask;
 
-    Window win = XCreateWindow(display, root, 0, 0, 800, 600, 0,
-        vi->depth, InputOutput, vi->visual,
-        CWColormap | CWEventMask, &swa);
+    if (fbc && fbcount > 0) {
+        vi = glXGetVisualFromFBConfig(display, fbc[0]);
+        cmap = XCreateColormap(display, root, vi->visual, AllocNone);
+        swa.colormap = cmap;
+        swa.event_mask = ExposureMask | KeyPressMask | StructureNotifyMask;
+        win = XCreateWindow(display, root, 0, 0, 800, 600, 0,
+            vi->depth, InputOutput, vi->visual,
+            CWColormap | CWEventMask, &swa);
+    } else {
+        // Fallback to legacy visual
+        GLint attributes[] = {
+            GLX_RGBA,
+            GLX_DEPTH_SIZE, 24,
+            GLX_DOUBLEBUFFER,
+            None
+        };
+        vi = glXChooseVisual(display, screen, attributes);
+        if (!vi) {
+            std::cerr << "No appropriate visual found\n";
+            XCloseDisplay(display);
+            return;
+        }
+        cmap = XCreateColormap(display, root, vi->visual, AllocNone);
+        swa.colormap = cmap;
+        swa.event_mask = ExposureMask | KeyPressMask | StructureNotifyMask;
+        win = XCreateWindow(display, root, 0, 0, 800, 600, 0,
+            vi->depth, InputOutput, vi->visual,
+            CWColormap | CWEventMask, &swa);
+    }
 
     XStoreName(display, win, "OpenGL Window");
     XMapWindow(display, win);
@@ -57,27 +88,13 @@ void run_window(std::atomic<bool>& running) {
 
     GLXContext modernCtx = nullptr;
 
-    if (glXCreateContextAttribsARB) {
-        int fbcount = 0;
-        static int visual_attribs[] = {
-            GLX_X_RENDERABLE    , True,
-            GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
-            GLX_RENDER_TYPE     , GLX_RGBA_BIT,
-            GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
-            GLX_RED_SIZE        , 8,
-            GLX_GREEN_SIZE      , 8,
-            GLX_BLUE_SIZE       , 8,
-            GLX_ALPHA_SIZE      , 8,
-            GLX_DEPTH_SIZE      , 24,
-            GLX_STENCIL_SIZE    , 8,
-            GLX_DOUBLEBUFFER    , True,
-            None
-        };
-        GLXFBConfig* fbc = glXChooseFBConfig(display, DefaultScreen(display), visual_attribs, &fbcount);
-        if (fbc && fbcount > 0) {
+    if (glXCreateContextAttribsARB && fbc && fbcount > 0) {
+        int majorVersions[] = {4, 4, 4, 4, 3, 3};
+        int minorVersions[] = {4, 3, 2, 1, 3, 0};
+        for (int i = 0; i < 6; ++i) {
             int context_attribs[] = {
-                GLX_CONTEXT_MAJOR_VERSION_ARB, 4,
-                GLX_CONTEXT_MINOR_VERSION_ARB, 4,
+                GLX_CONTEXT_MAJOR_VERSION_ARB, majorVersions[i],
+                GLX_CONTEXT_MINOR_VERSION_ARB, minorVersions[i],
                 GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
                 None
             };
@@ -86,11 +103,13 @@ void run_window(std::atomic<bool>& running) {
                 glXMakeCurrent(display, None, nullptr);
                 glXDestroyContext(display, legacyCtx);
                 glXMakeCurrent(display, win, modernCtx);
+                std::cout << "Created OpenGL context version " << majorVersions[i] << "." << minorVersions[i] << std::endl;
+                break;
             }
-            XFree(fbc);
         }
     }
 
+    // Main loop
     while (running) {
         while (XPending(display)) {
             XEvent xev;
@@ -99,7 +118,6 @@ void run_window(std::atomic<bool>& running) {
                 running = false;
             }
         }
-
         glViewport(0, 0, 800, 600);
         glClearColor(0.2f, 0.3f, 0.4f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -114,6 +132,9 @@ void run_window(std::atomic<bool>& running) {
         glXDestroyContext(display, legacyCtx);
     }
     XDestroyWindow(display, win);
+    XFreeColormap(display, cmap);
+    XFree(vi);
+    if (fbc) XFree(fbc);
     XCloseDisplay(display);
 }
 }
