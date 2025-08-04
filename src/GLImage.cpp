@@ -3,7 +3,8 @@
 #ifdef _WIN32
 
 #include <windows.h>
-#include <gl/GL.h>
+#include <GL/glew.h>
+#include <GL/gl.h>
 #include <atomic>
 #include <iostream>
 #undef UNICODE

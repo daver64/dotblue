@@ -21,6 +21,7 @@ add_library(DotBlue ${LIB_TYPE}
     src/DotBlue.cpp
     src/MemChunkAllocator.cpp
     src/GLImage.cpp
+    src/GLShader.cpp
     src/GLPlatformWin32.cpp
     src/GLPlatformUnix.cpp
     src/GLPlatform.cpp
@@ -53,7 +54,7 @@ if(BUILD_TESTS)
     target_include_directories(DotBlueTest PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )
-    target_link_libraries(DotBlueTest PRIVATE DotBlue) # <-- Add this line
+    target_link_libraries(DotBlueTest PRIVATE DotBlue "C:/Users/daver/LocalApps/glew-2.1.0/lib/Release/x64/glew32.lib")
 
     if(MSVC)
         target_compile_definitions(DotBlue PRIVATE _CRT_SECURE_NO_WARNINGS)
@@ -65,3 +66,14 @@ if(BUILD_TESTS)
             dl)
     endif()
 endif()
+
+# Set GLEW root directory
+set(GLEW_ROOT "C:/Users/daver/LocalApps/glew-2.1.0")
+
+# Add GLEW include directory
+include_directories(${GLEW_ROOT}/include)
+
+# Use absolute path for glew32.lib
+target_link_libraries(DotBlue PRIVATE
+    "C:/Users/daver/LocalApps/glew-2.1.0/lib/Release/x64/glew32.lib"
+)

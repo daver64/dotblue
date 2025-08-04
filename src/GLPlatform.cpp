@@ -1,4 +1,3 @@
-
 #include "DotBlue/DotBlue.h"
 #include "DotBlue/GLPlatform.h"
 #if defined(__linux__) || defined(__FreeBSD__)
@@ -10,8 +9,8 @@
 const char* default_font_str="/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf";
 #elif defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
-#include <gl/GL.h>
-#include <DotBlue/wglext.h>
+#include <GL/glew.h>
+#include <GL/gl.h>
 const char* default_font_str="C:/Windows/Fonts/consola.ttf";
 extern HDC glapp_hdc;
 #endif

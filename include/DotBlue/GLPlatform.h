@@ -19,6 +19,23 @@ namespace DotBlue
     {
         float r, g, b, a;
     };
+
+    class GLShader
+    {
+    public:
+        GLShader();
+        ~GLShader();
+
+        bool load(const std::string &vertexSrc, const std::string &fragmentSrc);
+        void bind() const;
+        void unbind() const;
+        unsigned int getProgram() const { return programID; }
+
+    private:
+        unsigned int programID;
+        unsigned int compileShader(unsigned int type, const std::string &src);
+        void deleteProgram();
+    };
     void InitApp();
     void RunWindow(std::atomic<bool> &running);
     void UpdateAndRender();

@@ -3,7 +3,8 @@
 #include <DotBlue/DotBlue.h>
 #include <DotBlue/GLPlatform.h>
 #include <windows.h>
-#include <gl/GL.h>
+#include <GL/glew.h>
+#include <GL/gl.h>
 #include <DotBlue/wglext.h>
 #include <atomic>
 #include <iostream>
@@ -21,10 +22,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
     }
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
-
-// WGL extension function pointers
-typedef HGLRC(WINAPI* PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC, HGLRC, const int*);
-typedef BOOL(WINAPI* PFNWGLCHOOSEPIXELFORMATARBPROC)(HDC, const int*, const FLOAT*, UINT, int*, UINT*);
 
 namespace DotBlue {
 HDC glapp_hdc;
@@ -67,41 +64,21 @@ void RunWindow(std::atomic<bool>& running)
     HGLRC tempContext = wglCreateContext(hdc);
     wglMakeCurrent(hdc, tempContext);
 
-    // Load WGL extension functions
-    PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = 
-        (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
-    PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB =
-        (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
+    typedef HGLRC (WINAPI * PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC, HGLRC, const int *);
+    PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = nullptr;
+    wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
 
     HGLRC modernContext = nullptr;
 
-    if (wglCreateContextAttribsARB && wglChoosePixelFormatARB) {
-        // Specify attributes for modern pixel format
-        const int pixelAttribs[] = {
-            WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
-            WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
-            WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
-            WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
-            WGL_COLOR_BITS_ARB, 24,
-            WGL_DEPTH_BITS_ARB, 24,
-            WGL_STENCIL_BITS_ARB, 8,
-            0
-        };
-        UINT numFormats;
-        int formats[1];
-        if (wglChoosePixelFormatARB(hdc, pixelAttribs, nullptr, 1, formats, &numFormats) && numFormats > 0) {
-            // Only set pixel format if it hasn't been set yet
-            // SetPixelFormat(hdc, formats[0], &pfd); // REMOVE this line!
-        }
-
+    if (wglCreateContextAttribsARB) {
         // Try to create the highest available context (4.4 down to 3.3)
         int majorVersions[] = {4, 4, 4, 4, 3, 3};
         int minorVersions[] = {4, 3, 2, 1, 3, 0};
         for (int i = 0; i < 6; ++i) {
             const int contextAttribs[] = {
-                WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
-                WGL_CONTEXT_MINOR_VERSION_ARB, 4,
-                WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, // <--- Use COMPATIBILITY
+                WGL_CONTEXT_MAJOR_VERSION_ARB, majorVersions[i],
+                WGL_CONTEXT_MINOR_VERSION_ARB, minorVersions[i],
+                WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB,
                 0
             };
             modernContext = wglCreateContextAttribsARB(hdc, 0, contextAttribs);
@@ -113,6 +90,11 @@ void RunWindow(std::atomic<bool>& running)
                 break;
             }
         }
+    }
+
+    if (glewInit() != GLEW_OK) {
+        std::cerr << "Failed to initialize GLEW!" << std::endl;
+        exit(1);
     }
 
     InitApp();
