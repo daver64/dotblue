@@ -54,13 +54,20 @@ if(BUILD_TESTS)
     target_include_directories(DotBlueTest PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )
-    target_link_libraries(DotBlueTest PRIVATE DotBlue "C:/Users/daver/LocalApps/glew-2.1.0/lib/Release/x64/glew32.lib")
-
-    if(MSVC)
+  if(MSVC)
+      target_link_libraries(DotBlueTest PRIVATE DotBlue "C:/Users/daver/LocalApps/glew-2.1.0/lib/Release/x64/glew32.lib")
         target_compile_definitions(DotBlue PRIVATE _CRT_SECURE_NO_WARNINGS)
     elseif(UNIX AND NOT APPLE)
         target_link_libraries(DotBlueTest PRIVATE
+            DotBlue
             GL
+            GLEW
+            X11
+            pthread
+            dl)
+        target_link_libraries(DotBlue PRIVATE
+            GL
+            GLEW
             X11
             pthread
             dl)
@@ -74,6 +81,8 @@ set(GLEW_ROOT "C:/Users/daver/LocalApps/glew-2.1.0")
 include_directories(${GLEW_ROOT}/include)
 
 # Use absolute path for glew32.lib
-target_link_libraries(DotBlue PRIVATE
-    "C:/Users/daver/LocalApps/glew-2.1.0/lib/Release/x64/glew32.lib"
-)
+if(MSVC)
+    target_link_libraries(DotBlue PRIVATE
+        "C:/Users/daver/LocalApps/glew-2.1.0/lib/Release/x64/glew32.lib"
+    )
+endif()
