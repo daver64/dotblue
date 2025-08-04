@@ -49,6 +49,7 @@ unsigned int LoadPNGTexture(const std::string &filename)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     stbi_image_free(data);
+    std::cout << "Texture id of " << filename << ": " << texID << std::endl;
     return texID;
 }
 void TexturedQuad(unsigned int textureID, float x0, float y0, float x1, float y1)

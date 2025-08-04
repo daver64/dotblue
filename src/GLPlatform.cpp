@@ -31,7 +31,7 @@ namespace DotBlue
         glapp_default_font = LoadFont(default_font_str);
         SetApplicationTitle("DotBlueTheBlue!!");
         texid=DotBlue::LoadPNGTexture("../bud.png");
-        std::cout << "Texture id of bud.png:" << texid << std::endl;
+        
     }
     void UpdateAndRender()
     {
@@ -58,7 +58,7 @@ namespace DotBlue
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         glColor4f(white.r, white.g, white.b, white.a);
-        TexturedQuad(texid, 100, 100, 300, 300);
+        TexturedQuad(texid, 100, 50, 300, 300);
         // Now render text at pixel coordinates
         GLPrintf(glapp_default_font, 100, 100, green, gTimingInfo.c_str());
         GLSwapBuffers();
