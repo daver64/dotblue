@@ -64,12 +64,16 @@ if(BUILD_TESTS)
             GL
             GLEW
             X11
+            SDL2
+            SDL2_mixer
             pthread
             dl)
         target_link_libraries(DotBlue PRIVATE
             GL
             GLEW
             X11
+            SDL2
+            SDL2_mixer
             pthread
             dl)
     endif()
