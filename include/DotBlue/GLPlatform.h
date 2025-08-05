@@ -49,7 +49,7 @@ namespace DotBlue
         void draw_quad(float x, float y, float w, float h) const; // Draw selected image at (x, y) with size (w, h)
 
         int getImageCount() const { return rows * cols; }
-
+        unsigned int getTextureID() const { return textureID; } 
     private:
         unsigned int textureID;
         int atlasWidth, atlasHeight;
@@ -75,5 +75,7 @@ namespace DotBlue
                           float x0, float y0, float u0, float v0,
                           float x1, float y1, float u1, float v1,
                           float x2, float y2, float u2, float v2);
+    void GLDisableTextureFiltering(unsigned int textureID);
+    void GLEnableTextureFiltering(unsigned int textureID);
 
 } // namespace DotBlue

@@ -25,12 +25,14 @@ namespace DotBlue
     std::string gTimingInfo;
     GLFont glapp_default_font = {};
     unsigned int texid=0;
+    DotBlue::GLTextureAtlas* glapp_texture_atlas = nullptr;
     void InitApp()
     {
         glapp_default_font = LoadFont(default_font_str);
         SetApplicationTitle("DotBlueTheBlue!!");
         texid=DotBlue::LoadPNGTexture("../bud.png");
-        
+        glapp_texture_atlas = new DotBlue::GLTextureAtlas("../mc.png", 16, 16);
+        GLDisableTextureFiltering(glapp_texture_atlas->getTextureID());
     }
     void UpdateAndRender()
     {
@@ -58,6 +60,13 @@ namespace DotBlue
 
         glColor4f(white.r, white.g, white.b, white.a);
         TexturedQuad(texid, 100, 50, 300, 300);
+
+        // Draw a quad from the texture atlas
+        
+        glapp_texture_atlas->select(16);
+        glapp_texture_atlas->bind();
+        glapp_texture_atlas->draw_quad(400, 50, 128, 128);
+        //GLEnableTextureFiltering(glapp_texture_atlas->getTextureID());
         // Now render text at pixel coordinates
         GLPrintf(glapp_default_font, 100, 100, green, "Hello DotBlue World!");
         GLSwapBuffers();
