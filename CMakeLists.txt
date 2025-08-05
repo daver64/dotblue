@@ -21,6 +21,7 @@ add_library(DotBlue ${LIB_TYPE}
     src/DotBlue.cpp
     src/MemChunkAllocator.cpp
     src/GLImage.cpp
+    src/GLTextureAtlas.cpp
     src/GLShader.cpp
     src/GLPlatformWin32.cpp
     src/GLPlatformUnix.cpp

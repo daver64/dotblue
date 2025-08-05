@@ -27,7 +27,7 @@ namespace DotBlue
         ~GLShader();
 
         bool load(const std::string &vertexSrc, const std::string &fragmentSrc);
-        bool loadFromFiles(const std::string& vertexPath, const std::string& fragmentPath);
+        bool loadFromFiles(const std::string &vertexPath, const std::string &fragmentPath);
         void bind() const;
         void unbind() const;
         unsigned int getProgram() const { return programID; }
@@ -37,6 +37,28 @@ namespace DotBlue
         unsigned int compileShader(unsigned int type, const std::string &src);
         void deleteProgram();
     };
+
+    class GLTextureAtlas
+    {
+    public:
+        GLTextureAtlas(const std::string &pngPath, int imgWidth, int imgHeight);
+        ~GLTextureAtlas();
+
+        void select(int index);                                   // Select image by index (0-based, left-to-right, top-to-bottom)
+        void bind() const;                                        // Bind the atlas texture
+        void draw_quad(float x, float y, float w, float h) const; // Draw selected image at (x, y) with size (w, h)
+
+        int getImageCount() const { return rows * cols; }
+
+    private:
+        unsigned int textureID;
+        int atlasWidth, atlasHeight;
+        int imgWidth, imgHeight;
+        int rows, cols;
+        int selectedIndex;
+        float u0, v0, u1, v1; // UVs for selected image
+    };
+
     void InitApp();
     void RunWindow(std::atomic<bool> &running);
     void UpdateAndRender();
