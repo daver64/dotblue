@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <fstream>
+#include <sstream>
 #include <atomic>
 #include <cstdarg>
 #include <cstdio>
@@ -73,6 +74,19 @@ bool GLShader::load(const std::string& vertexSrc, const std::string& fragmentSrc
     glDeleteShader(vs);
     glDeleteShader(fs);
     return true;
+}
+
+bool GLShader::loadFromFiles(const std::string& vertexPath, const std::string& fragmentPath) {
+    std::ifstream vFile(vertexPath);
+    std::ifstream fFile(fragmentPath);
+    if (!vFile.is_open() || !fFile.is_open()) {
+        std::cerr << "Failed to open shader files: " << vertexPath << ", " << fragmentPath << std::endl;
+        return false;
+    }
+    std::stringstream vStream, fStream;
+    vStream << vFile.rdbuf();
+    fStream << fFile.rdbuf();
+    return load(vStream.str(), fStream.str());
 }
 
 void GLShader::bind() const {

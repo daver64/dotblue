@@ -27,6 +27,7 @@ namespace DotBlue
         ~GLShader();
 
         bool load(const std::string &vertexSrc, const std::string &fragmentSrc);
+        bool loadFromFiles(const std::string& vertexPath, const std::string& fragmentPath);
         void bind() const;
         void unbind() const;
         unsigned int getProgram() const { return programID; }

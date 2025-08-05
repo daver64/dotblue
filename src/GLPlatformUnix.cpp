@@ -7,8 +7,10 @@
 #include <GL/glxext.h>
 #include <unistd.h>
 #include <atomic>
+#include <chrono>
 #include <iostream>
 #include <string>
+#include <thread>
 #include <DotBlue/GLPlatform.h>
 namespace DotBlue {
 Display* display = nullptr;
@@ -23,6 +25,7 @@ void GLSleep(int ms)
 }
 
 void RunWindow(std::atomic<bool>& running) {
+    const double targetFrameTime = 1000.0 / 60.0; // 60 FPS target (ms)
     display = XOpenDisplay(nullptr);
     if (!display) {
         std::cerr << "Cannot open X display\n";
@@ -123,6 +126,8 @@ void RunWindow(std::atomic<bool>& running) {
     DotBlue::InitApp();
     // Main loop
     while (running) {
+        auto frameStart = std::chrono::high_resolution_clock::now();
+
         while (XPending(display)) {
             XEvent xev;
             XNextEvent(display, &xev);
@@ -131,6 +136,12 @@ void RunWindow(std::atomic<bool>& running) {
             }
         }
         DotBlue::UpdateAndRender();
+
+        auto frameEnd = std::chrono::high_resolution_clock::now();
+        double elapsed = std::chrono::duration<double, std::milli>(frameEnd - frameStart).count();
+        if (elapsed < targetFrameTime) {
+            std::this_thread::sleep_for(std::chrono::milliseconds((int)(targetFrameTime - elapsed)));
+        }
     }
 
     glXMakeCurrent(display, None, nullptr);

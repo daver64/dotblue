@@ -10,6 +10,8 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <chrono>
+#include <thread>
 #undef UNICODE
 #undef _UNICODE
 
@@ -98,8 +100,14 @@ void RunWindow(std::atomic<bool>& running)
     }
 
     InitApp();
+
+    // Manual frame timing setup
+    const double targetFrameTime = 1000.0 / 60.0; // 60 FPS target (ms)
+
     while (running) 
     {
+        auto frameStart = std::chrono::high_resolution_clock::now();
+
         MSG msg;
         while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) 
         {
@@ -112,6 +120,12 @@ void RunWindow(std::atomic<bool>& running)
         }
 
         DotBlue::UpdateAndRender();
+
+        auto frameEnd = std::chrono::high_resolution_clock::now();
+        double elapsed = std::chrono::duration<double, std::milli>(frameEnd - frameStart).count();
+        if (elapsed < targetFrameTime) {
+            std::this_thread::sleep_for(std::chrono::milliseconds((int)(targetFrameTime - elapsed)));
+        }
     }
 
     wglMakeCurrent(nullptr, nullptr);

@@ -34,7 +34,7 @@ namespace DotBlue
     }
     void UpdateAndRender()
     {
-        auto start = std::chrono::high_resolution_clock::now();
+     //   auto start = std::chrono::high_resolution_clock::now();
         RGBA red{1.0,0.0,0.0,1.0};
         RGBA green{0.0,1.0,0.0,1.0};
         RGBA blue{0.0,0.0,1.0,1.0};
@@ -59,18 +59,17 @@ namespace DotBlue
         glColor4f(white.r, white.g, white.b, white.a);
         TexturedQuad(texid, 100, 50, 300, 300);
         // Now render text at pixel coordinates
-        GLPrintf(glapp_default_font, 100, 100, green, gTimingInfo.c_str());
+        GLPrintf(glapp_default_font, 100, 100, green, "Hello DotBlue World!");
         GLSwapBuffers();
-        GLSleep(16); // Sleep for 16 ms to simulate ~60 FPS
+  
+       // auto end = std::chrono::high_resolution_clock::now();
+      //  std::chrono::duration<double, std::milli> elapsed = end - start;
 
-        auto end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double, std::milli> elapsed = end - start;
-
-        static int counter=0;
-        counter++;
-        if (counter % 60 == 0) { // Update timing info every 60 frames
-            gTimingInfo = "Frame time: " + std::to_string(static_cast<int>(elapsed.count())) + " ms";
-        }
+       // static int counter=0;
+      //  counter++;
+       // if (counter % 60 == 0) { // Update timing info every 60 frames
+       //     gTimingInfo = "Frame time: " + std::to_string(static_cast<int>(elapsed.count())) + " ms";
+       // }
 
     }
 }
