@@ -6,41 +6,91 @@
 #include <GL/glx.h>
 #include <GL/gl.h>
 #include <GL/glxext.h>
-const char* default_font_str="/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf";
+const char *default_font_str = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf";
 #elif defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
 #include <GL/glew.h>
 #include <GL/gl.h>
-const char* default_font_str="C:/Windows/Fonts/consola.ttf";
+const char *default_font_str = "C:/Windows/Fonts/consola.ttf";
 extern HDC glapp_hdc;
 #endif
 #include <DotBlue/GLPlatform.h>
 #include <chrono>
 #include <string>
 #include <iostream>
-
+#include <filesystem>
+#include <SDL.h>
+#include <SDL_mixer.h>
 namespace DotBlue
 {
-    
+
     std::string gTimingInfo;
     GLFont glapp_default_font = {};
-    unsigned int texid=0;
-    DotBlue::GLTextureAtlas* glapp_texture_atlas = nullptr;
+    unsigned int texid = 0;
+    DotBlue::GLTextureAtlas *glapp_texture_atlas = nullptr;
+    Mix_Chunk *sound = nullptr;
     void InitApp()
     {
+
+        std::cout << "Current working directory: " << std::filesystem::current_path() << std::endl;
         glapp_default_font = LoadFont(default_font_str);
         SetApplicationTitle("DotBlueTheBlue!!");
-        texid=DotBlue::LoadPNGTexture("../bud.png");
+        texid = DotBlue::LoadPNGTexture("../bud.png");
         glapp_texture_atlas = new DotBlue::GLTextureAtlas("../mc.png", 16, 16);
         GLDisableTextureFiltering(glapp_texture_atlas->getTextureID());
+        if (SDL_Init(SDL_INIT_AUDIO) < 0)
+        {
+            std::cerr << "SDL_Init failed: " << SDL_GetError() << std::endl;
+            return;
+        }
+        else
+        {
+            std::cerr << "SDL_Init succeeded" << std::endl;
+            // Initialize SDL2_mixer (stereo, 44.1kHz, 16-bit, 1024 byte chunks)
+            if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024) == -1)
+            {
+                std::cerr << "Mix_OpenAudio failed: " << Mix_GetError() << std::endl;
+                SDL_Quit();
+                return;
+            }
+            else
+            {
+                std::cerr << "Mix_OpenAudio succeeded" << std::endl;
+            }
+            sound = Mix_LoadWAV("../stone1.wav");
+            if (!sound)
+            {
+                std::cerr << "Mix_LoadWAV failed: " << Mix_GetError() << std::endl;
+            }
+            else
+            {
+                std::cerr << "Mix_LoadWAV succeeded" << std::endl;
+                Mix_PlayChannel(-1, sound, 0);
+            }
+        }
+    }
+    void ShutdownApp()
+    {
+        if (sound)
+        {
+            Mix_FreeChunk(sound);
+            sound = nullptr;
+        }
+        Mix_CloseAudio();
+        SDL_Quit();
+        delete glapp_texture_atlas;
+        glapp_texture_atlas = nullptr;
+        if (texid)
+            glDeleteTextures(1, &texid);
+        texid = 0;
     }
     void UpdateAndRender()
     {
-     //   auto start = std::chrono::high_resolution_clock::now();
-        RGBA red{1.0,0.0,0.0,1.0};
-        RGBA green{0.0,1.0,0.0,1.0};
-        RGBA blue{0.0,0.0,1.0,1.0};
-        RGBA white{1.0,1.0,1.0,1.0};
+        //   auto start = std::chrono::high_resolution_clock::now();
+        RGBA red{1.0, 0.0, 0.0, 1.0};
+        RGBA green{0.0, 1.0, 0.0, 1.0};
+        RGBA blue{0.0, 0.0, 1.0, 1.0};
+        RGBA white{1.0, 1.0, 1.0, 1.0};
         int width = 800, height = 600; // You may want to make these dynamic
 
         // Set up orthographic projection for 2D text rendering
@@ -62,23 +112,22 @@ namespace DotBlue
         TexturedQuad(texid, 100, 50, 300, 300);
 
         // Draw a quad from the texture atlas
-        
+
         glapp_texture_atlas->select(16);
         glapp_texture_atlas->bind();
         glapp_texture_atlas->draw_quad(400, 50, 128, 128);
-        //GLEnableTextureFiltering(glapp_texture_atlas->getTextureID());
-        // Now render text at pixel coordinates
+        // GLEnableTextureFiltering(glapp_texture_atlas->getTextureID());
+        //  Now render text at pixel coordinates
         GLPrintf(glapp_default_font, 100, 100, green, "Hello DotBlue World!");
         GLSwapBuffers();
-  
-       // auto end = std::chrono::high_resolution_clock::now();
-      //  std::chrono::duration<double, std::milli> elapsed = end - start;
 
-       // static int counter=0;
-      //  counter++;
-       // if (counter % 60 == 0) { // Update timing info every 60 frames
-       //     gTimingInfo = "Frame time: " + std::to_string(static_cast<int>(elapsed.count())) + " ms";
-       // }
+        // auto end = std::chrono::high_resolution_clock::now();
+        //  std::chrono::duration<double, std::milli> elapsed = end - start;
 
+        // static int counter=0;
+        //  counter++;
+        // if (counter % 60 == 0) { // Update timing info every 60 frames
+        //     gTimingInfo = "Frame time: " + std::to_string(static_cast<int>(elapsed.count())) + " ms";
+        // }
     }
 }

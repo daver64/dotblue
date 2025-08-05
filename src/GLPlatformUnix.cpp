@@ -143,7 +143,7 @@ void RunWindow(std::atomic<bool>& running) {
             std::this_thread::sleep_for(std::chrono::milliseconds((int)(targetFrameTime - elapsed)));
         }
     }
-
+    DotBlue::ShutdownApp();
     glXMakeCurrent(display, None, nullptr);
     if (modernCtx) {
         glXDestroyContext(display, modernCtx);

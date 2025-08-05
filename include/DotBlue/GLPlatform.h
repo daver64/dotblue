@@ -60,6 +60,7 @@ namespace DotBlue
     };
 
     void InitApp();
+    void ShutdownApp();
     void RunWindow(std::atomic<bool> &running);
     void UpdateAndRender();
     void GLSwapBuffers();

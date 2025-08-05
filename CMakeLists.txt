@@ -87,3 +87,20 @@ if(MSVC)
         "C:/Users/daver/LocalApps/glew-2.1.0/lib/Release/x64/glew32.lib"
     )
 endif()
+
+set(SDL2_MIXER_ROOT "C:/Users/daver/LocalApps/SDL2_mixer-2.8.1")
+include_directories(${SDL2_MIXER_ROOT}/include)
+
+if(MSVC)
+    target_link_libraries(DotBlue PRIVATE "${SDL2_MIXER_ROOT}/lib/x64/SDL2_mixer.lib")
+    target_link_libraries(DotBlueTest PRIVATE DotBlue "${SDL2_MIXER_ROOT}/lib/x64/SDL2_mixer.lib")
+endif()
+
+# Set SDL2 root directory (use SDL2, not SDL3)
+set(SDL2_ROOT "C:/Users/daver/LocalApps/SDL2-2.32.6")
+include_directories(${SDL2_ROOT}/include)
+
+if(MSVC)
+    target_link_libraries(DotBlue PRIVATE "${SDL2_ROOT}/lib/x64/SDL2.lib")
+    target_link_libraries(DotBlueTest PRIVATE DotBlue "${SDL2_ROOT}/lib/x64/SDL2.lib")
+endif()

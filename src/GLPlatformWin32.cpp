@@ -99,7 +99,7 @@ void RunWindow(std::atomic<bool>& running)
         exit(1);
     }
 
-    InitApp();
+    DotBlue::InitApp();
 
     // Manual frame timing setup
     const double targetFrameTime = 1000.0 / 60.0; // 60 FPS target (ms)
@@ -127,7 +127,7 @@ void RunWindow(std::atomic<bool>& running)
             std::this_thread::sleep_for(std::chrono::milliseconds((int)(targetFrameTime - elapsed)));
         }
     }
-
+    DotBlue::ShutdownApp();
     wglMakeCurrent(nullptr, nullptr);
     if (modernContext) {
         wglDeleteContext(modernContext);
