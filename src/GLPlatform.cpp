@@ -34,6 +34,7 @@ namespace DotBlue
     unsigned int texid = 0;
     DotBlue::GLTextureAtlas *glapp_texture_atlas = nullptr;
     Mix_Chunk *sound = nullptr;
+    Mix_Music *music = nullptr;
     void InitApp()
     {
 
@@ -72,6 +73,17 @@ namespace DotBlue
                 std::cerr << "Mix_LoadWAV succeeded" << std::endl;
                 Mix_PlayChannel(-1, sound, 0);
             }
+        }
+
+        music = Mix_LoadMUS("../hal3.mp3");
+        if (!music)
+        {
+            std::cerr << "Mix_LoadMUS failed: " << Mix_GetError() << std::endl;
+        }
+        else
+        {
+            std::cerr << "Mix_LoadMUS succeeded" << std::endl;
+            Mix_PlayMusic(music, 0); // 0 = play once, -1 = loop
         }
     }
     void ShutdownApp()
