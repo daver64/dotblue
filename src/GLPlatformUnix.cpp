@@ -12,6 +12,8 @@
 #include <string>
 #include <thread>
 #include <DotBlue/GLPlatform.h>
+#include "imgui.h"
+#include "backends/imgui_impl_opengl3.h"
 namespace DotBlue
 {
     Display *display = nullptr;
@@ -65,7 +67,8 @@ namespace DotBlue
             vi = glXGetVisualFromFBConfig(display, fbc[0]);
             cmap = XCreateColormap(display, root, vi->visual, AllocNone);
             swa.colormap = cmap;
-            swa.event_mask = ExposureMask | KeyPressMask | StructureNotifyMask;
+            swa.event_mask = ExposureMask | KeyPressMask | StructureNotifyMask
+                | ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
             win = XCreateWindow(display, root, 0, 0, 800, 600, 0,
                                 vi->depth, InputOutput, vi->visual,
                                 CWColormap | CWEventMask, &swa);
@@ -87,7 +90,8 @@ namespace DotBlue
             }
             cmap = XCreateColormap(display, root, vi->visual, AllocNone);
             swa.colormap = cmap;
-            swa.event_mask = ExposureMask | KeyPressMask | StructureNotifyMask;
+            swa.event_mask = ExposureMask | KeyPressMask | StructureNotifyMask
+                | ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
             win = XCreateWindow(display, root, 0, 0, 800, 600, 0,
                                 vi->depth, InputOutput, vi->visual,
                                 CWColormap | CWEventMask, &swa);
@@ -95,6 +99,16 @@ namespace DotBlue
 
         XStoreName(display, win, "OpenGL Window");
         XMapWindow(display, win);
+
+        // Set size hints
+        XSizeHints *size_hints = XAllocSizeHints();
+        size_hints->flags = PPosition | PSize | PMinSize | PMaxSize;
+        size_hints->min_width = 200;
+        size_hints->min_height = 150;
+        size_hints->max_width = 1920;
+        size_hints->max_height = 1080;
+        XSetNormalHints(display, win, size_hints);
+        XFree(size_hints);
 
         // Create legacy context first
         GLXContext legacyCtx = glXCreateContext(display, vi, nullptr, GL_TRUE);
@@ -130,11 +144,18 @@ namespace DotBlue
                 }
             }
         }
+        ImGui::CreateContext();
+        ImGui_ImplOpenGL3_Init("#version 130");
         DotBlue::InitApp();
         // Main loop
         while (running)
         {
             auto frameStart = std::chrono::high_resolution_clock::now();
+
+            ImGuiIO &io = ImGui::GetIO();
+            // Optionally, initialize mouse state to false at the start of each frame
+            io.MouseDown[0] = false;
+            io.MouseDown[1] = false;
 
             while (XPending(display))
             {
@@ -143,6 +164,48 @@ namespace DotBlue
                 if (xev.type == ClientMessage || xev.type == DestroyNotify)
                 {
                     running = false;
+                }
+                else if (xev.type == MotionNotify)
+                {
+                    io.MousePos = ImVec2((float)xev.xmotion.x, (float)xev.xmotion.y);
+                }
+                else if (xev.type == ButtonPress)
+                {
+                    if (xev.xbutton.button == Button1) io.MouseDown[0] = true; // Left
+                    if (xev.xbutton.button == Button3) io.MouseDown[1] = true; // Right
+                }
+                else if (xev.type == ButtonRelease)
+                {
+                    if (xev.xbutton.button == Button1) io.MouseDown[0] = false;
+                    if (xev.xbutton.button == Button3) io.MouseDown[1] = false;
+                }
+                else if (xev.type == KeyPress)
+                {
+                    KeySym keysym = XLookupKeysym(&xev.xkey, 0);
+                    if (keysym == XK_Left)   io.AddKeyEvent(ImGuiKey_LeftArrow, true);
+                    if (keysym == XK_Right)  io.AddKeyEvent(ImGuiKey_RightArrow, true);
+                    if (keysym == XK_Up)     io.AddKeyEvent(ImGuiKey_UpArrow, true);
+                    if (keysym == XK_Down)   io.AddKeyEvent(ImGuiKey_DownArrow, true);
+                    if (keysym == XK_Control_L || keysym == XK_Control_R) io.AddKeyEvent(ImGuiKey_LeftCtrl, true);
+                    // ...add more keys as needed...
+                }
+                else if (xev.type == KeyRelease)
+                {
+                    KeySym keysym = XLookupKeysym(&xev.xkey, 0);
+                    if (keysym == XK_Left)   io.AddKeyEvent(ImGuiKey_LeftArrow, false);
+                    if (keysym == XK_Right)  io.AddKeyEvent(ImGuiKey_RightArrow, false);
+                    if (keysym == XK_Up)     io.AddKeyEvent(ImGuiKey_UpArrow, false);
+                    if (keysym == XK_Down)   io.AddKeyEvent(ImGuiKey_DownArrow, false);
+                    if (keysym == XK_Control_L || keysym == XK_Control_R) io.AddKeyEvent(ImGuiKey_LeftCtrl, false);
+                    // ...add more keys as needed...
+                }
+                else if (xev.type == FocusIn)
+                {
+                    io.AddFocusEvent(true);
+                }
+                else if (xev.type == FocusOut)
+                {
+                    io.AddFocusEvent(false);
                 }
             }
             DotBlue::HandleInput();

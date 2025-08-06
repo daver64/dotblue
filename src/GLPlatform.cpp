@@ -22,6 +22,7 @@ extern HDC glapp_hdc;
 #if defined(WIN32) || defined(__CYGWIN__)
 #include <SDL.h>
 #include <SDL_mixer.h>
+extern HWND hwnd;
 #elif defined(__linux__) || defined(__FreeBSD__)
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
@@ -29,7 +30,7 @@ extern HDC glapp_hdc;
 #include "imgui.h"
 #include "backends/imgui_impl_opengl3.h"
 #include "backends/imgui_impl_win32.h"
-extern HWND hwnd;
+
 namespace DotBlue
 {
     
@@ -154,6 +155,7 @@ namespace DotBlue
 
         // Each frame:
         ImGuiIO &io = ImGui::GetIO();
+#if defined(_WIN32)
         RECT rect;
         GetClientRect(hwnd, &rect);
         io.DisplaySize.x = static_cast<float>(rect.right - rect.left);
@@ -161,6 +163,14 @@ namespace DotBlue
 
         ImGui_ImplWin32_NewFrame();
         ImGui_ImplOpenGL3_NewFrame();
+#elif defined(__linux__) || defined(__FreeBSD__)
+        // Set display size using your window variables (replace width/height if needed)
+        io.DisplaySize.x = static_cast<float>(width);
+        io.DisplaySize.y = static_cast<float>(height);
+
+        ImGui_ImplOpenGL3_NewFrame();
+        // If you use SDL2 for windowing, you may want ImGui_ImplSDL2_NewFrame(window);
+#endif
         ImGui::NewFrame();
 
         ImGui::Begin("Hello, DotBlue!");

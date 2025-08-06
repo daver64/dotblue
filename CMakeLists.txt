@@ -16,8 +16,7 @@ else()
     set(LIB_TYPE SHARED)
 endif()
 
-# Define the library
-add_library(DotBlue ${LIB_TYPE}
+set(DOTBLUE_SOURCES
     src/DotBlue.cpp
     src/MemChunkAllocator.cpp
     src/GLImage.cpp
@@ -33,8 +32,16 @@ add_library(DotBlue ${LIB_TYPE}
     src/imgui_widgets.cpp
     src/imgui_demo.cpp
     src/backends/imgui_impl_opengl3.cpp
-    src/backends/imgui_impl_win32.cpp
 )
+
+if(WIN32 OR CYGWIN)
+    list(APPEND DOTBLUE_SOURCES src/backends/imgui_impl_win32.cpp)
+elseif(UNIX AND NOT APPLE)
+    # If you use SDL2 for Linux, uncomment the next line:
+    # list(APPEND DOTBLUE_SOURCES src/backends/imgui_impl_sdl2.cpp)
+endif()
+
+add_library(DotBlue ${LIB_TYPE} ${DOTBLUE_SOURCES})
 
 # Export symbols (for shared)
 target_compile_definitions(DotBlue PRIVATE
@@ -52,6 +59,7 @@ target_compile_definitions(DotBlue PRIVATE
 # Public headers
 target_include_directories(DotBlue PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
     $<INSTALL_INTERFACE:include>
 )
 
