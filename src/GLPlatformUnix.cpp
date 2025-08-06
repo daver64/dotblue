@@ -143,7 +143,7 @@ namespace DotBlue
             }
         }
         ImGui::CreateContext();
-        ImGui_ImplOpenGL3_Init("#version 130");
+        ImGui_ImplOpenGL3_Init("#version 400");
         DotBlue::InitApp();
         // Main loop
         while (running)

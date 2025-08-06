@@ -44,6 +44,7 @@ namespace DotBlue
     }
     void GLSleep(int ms)
     {
+        Sleep(ms);
     }
     void RunWindow(std::atomic<bool> &running)
     {
@@ -113,7 +114,7 @@ namespace DotBlue
         }
         ImGui::CreateContext();
         ImGui_ImplWin32_Init(hwnd); // hwnd is your window handle
-        ImGui_ImplOpenGL3_Init("#version 130");
+        ImGui_ImplOpenGL3_Init("#version 400");
         DotBlue::InitApp();
 
         // Manual frame timing setup

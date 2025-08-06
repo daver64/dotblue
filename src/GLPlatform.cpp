@@ -41,6 +41,7 @@ namespace DotBlue
     DotBlue::GLTextureAtlas *glapp_texture_atlas = nullptr;
     Mix_Chunk *sound = nullptr;
     Mix_Music *music = nullptr;
+    DotBlue::GLShader *shader = nullptr;
     void InitApp()
     {
 
@@ -93,6 +94,16 @@ namespace DotBlue
             Mix_VolumeMusic(MIX_MAX_VOLUME / 16);
             Mix_PlayMusic(music, 0); // 0 = play once, -1 = loop
         }
+
+        shader = new DotBlue::GLShader();
+        if (!shader->loadFromFiles("../shaders/passthrough.vert", "../shaders/passthrough.frag"))
+        {
+            std::cerr << "Failed to load shaders!" << std::endl;
+        }
+        else
+        {
+            std::cerr << "Shaders loaded successfully!" << std::endl;
+        }
     }
     void ShutdownApp()
     {
@@ -115,10 +126,8 @@ namespace DotBlue
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
-//#if defined(__linux__) || defined(__FreeBSD__)
-            ImGui_ImplSDL2_ProcessEvent(&event); // <-- Forward events to ImGui
-// Handle keyboard and window events here
-//#endif
+            ImGui_ImplSDL2_ProcessEvent(&event); 
+
         }
     }
 #endif
