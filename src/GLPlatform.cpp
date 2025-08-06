@@ -76,6 +76,7 @@ namespace DotBlue
             else
             {
                 std::cerr << "Mix_LoadWAV succeeded" << std::endl;
+                Mix_VolumeChunk(sound, MIX_MAX_VOLUME / 16);
                 Mix_PlayChannel(-1, sound, 0);
             }
         }
@@ -88,11 +89,10 @@ namespace DotBlue
         else
         {
             std::cerr << "Mix_LoadMUS succeeded" << std::endl;
+            Mix_VolumeMusic(MIX_MAX_VOLUME / 16); 
             Mix_PlayMusic(music, 0); // 0 = play once, -1 = loop
         }
-        // ImGui::CreateContext();
-        // ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
-        // ImGui_ImplOpenGL3_Init("#version 130"); // Or your GL version
+
     }
     void ShutdownApp()
     {
