@@ -110,6 +110,7 @@ namespace DotBlue
             glDeleteTextures(1, &texid);
         texid = 0;
     }
+    #if defined(linux) || defined(__FreeBSD__)
     void HandleInput(SDL_Window* window)
     {
         SDL_Event event;
@@ -120,6 +121,18 @@ namespace DotBlue
             // Handle keyboard and window events here
             #endif
         }
+    }
+    #endif
+    void HandleInput()
+    {
+         SDL_Event event;
+        while (SDL_PollEvent(&event))
+        {
+           // #if defined(__linux__) || defined(__FreeBSD__)
+           // ImGui_ImplSDL2_ProcessEvent(&event); // <-- Forward events to ImGui
+            // Handle keyboard and window events here
+           // #endif
+        }  
     }
     void UpdateAndRender()
     {
