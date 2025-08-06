@@ -27,6 +27,13 @@ add_library(DotBlue ${LIB_TYPE}
     src/GLPlatformUnix.cpp
     src/GLPlatform.cpp
     src/GLPrintf.cpp
+    src/imgui.cpp
+    src/imgui_draw.cpp
+    src/imgui_tables.cpp
+    src/imgui_widgets.cpp
+    src/imgui_demo.cpp
+    src/backends/imgui_impl_opengl3.cpp
+    src/backends/imgui_impl_win32.cpp
 )
 
 # Export symbols (for shared)
@@ -108,3 +115,5 @@ if(MSVC)
     target_link_libraries(DotBlue PRIVATE "${SDL2_ROOT}/lib/x64/SDL2.lib")
     target_link_libraries(DotBlueTest PRIVATE DotBlue "${SDL2_ROOT}/lib/x64/SDL2.lib")
 endif()
+
+include_directories("C:/Users/daver/source/dotblue/src")

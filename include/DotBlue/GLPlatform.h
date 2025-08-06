@@ -63,6 +63,7 @@ namespace DotBlue
     void ShutdownApp();
     void RunWindow(std::atomic<bool> &running);
     void UpdateAndRender();
+    void HandleInput();
     void GLSwapBuffers();
     void GLSleep(int ms);
     GLFont LoadFont(const char *fontPath, float pixelHeight = 14.0f);

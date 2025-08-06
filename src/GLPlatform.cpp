@@ -26,9 +26,13 @@ extern HDC glapp_hdc;
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
 #endif
+#include "imgui.h"
+#include "backends/imgui_impl_opengl3.h"
+#include "backends/imgui_impl_win32.h"
+extern HWND hwnd;
 namespace DotBlue
 {
-
+    
     std::string gTimingInfo;
     GLFont glapp_default_font = {};
     unsigned int texid = 0;
@@ -85,6 +89,9 @@ namespace DotBlue
             std::cerr << "Mix_LoadMUS succeeded" << std::endl;
             Mix_PlayMusic(music, 0); // 0 = play once, -1 = loop
         }
+        // ImGui::CreateContext();
+        // ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
+        // ImGui_ImplOpenGL3_Init("#version 130"); // Or your GL version
     }
     void ShutdownApp()
     {
@@ -100,6 +107,14 @@ namespace DotBlue
         if (texid)
             glDeleteTextures(1, &texid);
         texid = 0;
+    }
+    void HandleInput()
+    {
+        SDL_Event event;
+        while (SDL_PollEvent(&event))
+        {
+            // Handle keyboard and window events here
+        }
     }
     void UpdateAndRender()
     {
@@ -136,8 +151,33 @@ namespace DotBlue
         // GLEnableTextureFiltering(glapp_texture_atlas->getTextureID());
         //  Now render text at pixel coordinates
         GLPrintf(glapp_default_font, 100, 100, green, "Hello DotBlue World!");
-        GLSwapBuffers();
 
+        // Each frame:
+        ImGuiIO &io = ImGui::GetIO();
+        RECT rect;
+        GetClientRect(hwnd, &rect);
+        io.DisplaySize.x = static_cast<float>(rect.right - rect.left);
+        io.DisplaySize.y = static_cast<float>(rect.bottom - rect.top);
+
+        ImGui_ImplWin32_NewFrame();
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui::NewFrame();
+
+        ImGui::Begin("Hello, DotBlue!");
+        ImGui::Text("Welcome to DotBlue!");
+        if (ImGui::Button("Press Me"))
+        {
+            ImGui::Text("Button was pressed!");
+        }
+        static float sliderValue = 0.0f;
+        ImGui::SliderFloat("Slider", &sliderValue, 0.0f, 1.0f);
+        ImGui::End();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        // Swap buffers (platform-specific)
+        GLSwapBuffers();
         // auto end = std::chrono::high_resolution_clock::now();
         //  std::chrono::duration<double, std::milli> elapsed = end - start;
 
