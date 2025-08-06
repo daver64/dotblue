@@ -69,8 +69,8 @@ if(BUILD_TESTS)
     target_include_directories(DotBlueTest PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )
-  if(MSVC)
-      target_link_libraries(DotBlueTest PRIVATE DotBlue "C:/Users/daver/LocalApps/glew-2.1.0/lib/Release/x64/glew32.lib")
+    if(MSVC)
+        target_link_libraries(DotBlueTest PRIVATE DotBlue "C:/Users/daver/LocalApps/glew-2.1.0/lib/Release/x64/glew32.lib")
         target_compile_definitions(DotBlue PRIVATE _CRT_SECURE_NO_WARNINGS)
     elseif(UNIX AND NOT APPLE)
         target_link_libraries(DotBlueTest PRIVATE
@@ -112,15 +112,16 @@ include_directories(${SDL2_MIXER_ROOT}/include)
 if(MSVC)
     target_link_libraries(DotBlue PRIVATE "${SDL2_MIXER_ROOT}/lib/x64/SDL2_mixer.lib")
     target_link_libraries(DotBlueTest PRIVATE DotBlue "${SDL2_MIXER_ROOT}/lib/x64/SDL2_mixer.lib")
-endif()
+#endif()
 
 # Set SDL2 root directory (use SDL2, not SDL3)
 set(SDL2_ROOT "C:/Users/daver/LocalApps/SDL2-2.32.6")
 include_directories(${SDL2_ROOT}/include)
 
-if(MSVC)
+#if(MSVC)
     target_link_libraries(DotBlue PRIVATE "${SDL2_ROOT}/lib/x64/SDL2.lib")
     target_link_libraries(DotBlueTest PRIVATE DotBlue "${SDL2_ROOT}/lib/x64/SDL2.lib")
+    include_directories("C:/Users/daver/source/dotblue/src")
 endif()
 
-include_directories("C:/Users/daver/source/dotblue/src")
+
