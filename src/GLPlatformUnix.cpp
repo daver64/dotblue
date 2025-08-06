@@ -152,8 +152,8 @@ namespace DotBlue
 
             ImGuiIO &io = ImGui::GetIO();
             // Optionally, initialize mouse state to false at the start of each frame
-            io.MouseDown[0] = false;
-            io.MouseDown[1] = false;
+          //  io.MouseDown[0] = false;
+           // io.MouseDown[1] = false;
 
             while (XPending(display))
             {
