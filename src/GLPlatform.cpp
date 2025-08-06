@@ -34,7 +34,7 @@ extern HWND hwnd;
 
 namespace DotBlue
 {
-    
+
     std::string gTimingInfo;
     GLFont glapp_default_font = {};
     unsigned int texid = 0;
@@ -90,10 +90,9 @@ namespace DotBlue
         else
         {
             std::cerr << "Mix_LoadMUS succeeded" << std::endl;
-            Mix_VolumeMusic(MIX_MAX_VOLUME / 16); 
+            Mix_VolumeMusic(MIX_MAX_VOLUME / 16);
             Mix_PlayMusic(music, 0); // 0 = play once, -1 = loop
         }
-
     }
     void ShutdownApp()
     {
@@ -110,29 +109,25 @@ namespace DotBlue
             glDeleteTextures(1, &texid);
         texid = 0;
     }
-    #if defined(linux) || defined(__FreeBSD__)
-    void HandleInput(SDL_Window* window)
+#if defined(linux) || defined(__FreeBSD__)
+    void HandleInput(SDL_Window *window)
     {
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
-            #if defined(__linux__) || defined(__FreeBSD__)
+//#if defined(__linux__) || defined(__FreeBSD__)
             ImGui_ImplSDL2_ProcessEvent(&event); // <-- Forward events to ImGui
-            // Handle keyboard and window events here
-            #endif
+// Handle keyboard and window events here
+//#endif
         }
     }
-    #endif
+#endif
     void HandleInput()
     {
-         SDL_Event event;
+        SDL_Event event;
         while (SDL_PollEvent(&event))
         {
-           // #if defined(__linux__) || defined(__FreeBSD__)
-           // ImGui_ImplSDL2_ProcessEvent(&event); // <-- Forward events to ImGui
-            // Handle keyboard and window events here
-           // #endif
-        }  
+        }
     }
     void UpdateAndRender()
     {
