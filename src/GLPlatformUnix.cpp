@@ -1,5 +1,6 @@
 // platform_x11.cpp
 #if defined(__linux__) || defined(__FreeBSD__)
+#include <GL/glew.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <GL/glx.h>
@@ -144,6 +145,19 @@ namespace DotBlue
         }
         ImGui::CreateContext();
         ImGui_ImplOpenGL3_Init("#version 400");
+        
+        // Initialize GLEW after OpenGL context is created and current
+        if (glewInit() != GLEW_OK)
+        {
+            std::cerr << "Failed to initialize GLEW!" << std::endl;
+            running = false;
+            return;
+        }
+        else
+        {
+            std::cerr << "GLEW initialized successfully" << std::endl;
+        }
+        
         DotBlue::InitApp();
         // Main loop
         while (running)
