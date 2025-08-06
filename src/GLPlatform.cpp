@@ -30,6 +30,7 @@ extern HWND hwnd;
 #include "imgui.h"
 #include "backends/imgui_impl_opengl3.h"
 #include "backends/imgui_impl_win32.h"
+#include "backends/imgui_impl_sdl2.h"
 
 namespace DotBlue
 {
@@ -109,12 +110,15 @@ namespace DotBlue
             glDeleteTextures(1, &texid);
         texid = 0;
     }
-    void HandleInput()
+    void HandleInput(SDL_Window* window)
     {
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
+            #if defined(__linux__) || defined(__FreeBSD__)
+            ImGui_ImplSDL2_ProcessEvent(&event); // <-- Forward events to ImGui
             // Handle keyboard and window events here
+            #endif
         }
     }
     void UpdateAndRender()
@@ -173,7 +177,7 @@ namespace DotBlue
 #endif
         ImGui::NewFrame();
 
-        ImGui::Begin("Hello, DotBlue!");
+        ImGui::Begin("Hello, DotBlue!"); // No ImGuiWindowFlags_NoMove, NoResize
         ImGui::Text("Welcome to DotBlue!");
         if (ImGui::Button("Press Me"))
         {

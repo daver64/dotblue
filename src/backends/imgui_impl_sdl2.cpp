@@ -110,8 +110,13 @@
 #endif
 
 // SDL
+#if defined(__linux__) || defined(__FreeBSD__)
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_syswm.h>
+#else
 #include <SDL.h>
 #include <SDL_syswm.h>
+#endif
 #include <stdio.h>              // for snprintf()
 #ifdef __APPLE__
 #include <TargetConditionals.h>
@@ -130,7 +135,11 @@
 #define SDL_HAS_VULKAN                      SDL_VERSION_ATLEAST(2,0,6)
 #define SDL_HAS_OPEN_URL                    SDL_VERSION_ATLEAST(2,0,14)
 #if SDL_HAS_VULKAN
+#if defined(__linux__) || defined(__FreeBSD__)
+#include <SDL2/SDL_vulkan.h>
+#else
 #include <SDL_vulkan.h>
+#endif
 #endif
 
 // SDL Data

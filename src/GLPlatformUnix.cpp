@@ -102,11 +102,9 @@ namespace DotBlue
 
         // Set size hints
         XSizeHints *size_hints = XAllocSizeHints();
-        size_hints->flags = PPosition | PSize | PMinSize | PMaxSize;
+        size_hints->flags = PPosition | PSize | PMinSize;
         size_hints->min_width = 200;
         size_hints->min_height = 150;
-        size_hints->max_width = 1920;
-        size_hints->max_height = 1080;
         XSetNormalHints(display, win, size_hints);
         XFree(size_hints);
 
@@ -182,7 +180,7 @@ namespace DotBlue
                 else if (xev.type == KeyPress)
                 {
                     KeySym keysym = XLookupKeysym(&xev.xkey, 0);
-                    if (keysym == XK_Left)   io.AddKeyEvent(ImGuiKey_LeftArrow, true);
+                    if (keysym == XK_Left)   io.AddKeyEvent(ImGuiKey_LeftArrow, true);   // or false for release
                     if (keysym == XK_Right)  io.AddKeyEvent(ImGuiKey_RightArrow, true);
                     if (keysym == XK_Up)     io.AddKeyEvent(ImGuiKey_UpArrow, true);
                     if (keysym == XK_Down)   io.AddKeyEvent(ImGuiKey_DownArrow, true);
@@ -208,7 +206,7 @@ namespace DotBlue
                     io.AddFocusEvent(false);
                 }
             }
-            DotBlue::HandleInput();
+            //DotBlue::HandleInput(win);
             DotBlue::UpdateAndRender();
 
             auto frameEnd = std::chrono::high_resolution_clock::now();

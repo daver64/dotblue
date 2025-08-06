@@ -3,7 +3,7 @@
 #include <string>
 #include "stb_truetype.h"
 #include "stb_image.h"
-
+#include <SDL2/SDL.h>
 #ifndef GL_CLAMP_TO_EDGE
 #define GL_CLAMP_TO_EDGE 0x812F
 #endif
@@ -63,7 +63,7 @@ namespace DotBlue
     void ShutdownApp();
     void RunWindow(std::atomic<bool> &running);
     void UpdateAndRender();
-    void HandleInput();
+    void HandleInput(SDL_Window* window);
     void GLSwapBuffers();
     void GLSleep(int ms);
     GLFont LoadFont(const char *fontPath, float pixelHeight = 14.0f);

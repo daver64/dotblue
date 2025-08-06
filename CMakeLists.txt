@@ -37,8 +37,7 @@ set(DOTBLUE_SOURCES
 if(WIN32 OR CYGWIN)
     list(APPEND DOTBLUE_SOURCES src/backends/imgui_impl_win32.cpp)
 elseif(UNIX AND NOT APPLE)
-    # If you use SDL2 for Linux, uncomment the next line:
-    # list(APPEND DOTBLUE_SOURCES src/backends/imgui_impl_sdl2.cpp)
+    list(APPEND DOTBLUE_SOURCES src/backends/imgui_impl_sdl2.cpp)
 endif()
 
 add_library(DotBlue ${LIB_TYPE} ${DOTBLUE_SOURCES})
