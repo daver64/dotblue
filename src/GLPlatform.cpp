@@ -19,6 +19,8 @@ extern HDC glapp_hdc;
 #include <string>
 #include <iostream>
 #include <filesystem>
+
+
 #if defined(WIN32) || defined(__CYGWIN__)
 #include <SDL.h>
 #include <SDL_mixer.h>
@@ -165,8 +167,19 @@ namespace DotBlue
         glColor4f(white.r, white.g, white.b, white.a);
         TexturedQuad(texid, 100, 50, 300, 300);
 
+        glColor4f(red.r, red.g, red.b, red.a);
+        GLLine(100, 400, 300, 400); // Draw a red line (fixed-function)
+        
+        // Test shader-based drawing
+        shader->bind();
+        shader->setVec2("u_resolution", (float)width, (float)height);
+        GLLineShader(100.0f, 450.0f, 300.0f, 450.0fDo, 0.0f, 1.0f, 0.0f); // Green line
+        GLTriangleShader(500.0f, 400.0f, 550.0f, 350.0f, 600.0f, 400.0f, 1.0f, 1.0f, 0.0f); // Yellow triangle
+        GLRectangleShader(500.0f, 450.0f, 600.0f, 500.0f, 1.0f, 0.0f, 1.0f); // Magenta rectangle
+        shader->unbind();
+        
         // Draw a quad from the texture atlas
-
+ glColor4f(white.r, white.g, white.b, white.a);
         glapp_texture_atlas->select(16);
         glapp_texture_atlas->bind();
         glapp_texture_atlas->draw_quad(400, 50, 128, 128);

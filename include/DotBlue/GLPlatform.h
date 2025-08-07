@@ -33,6 +33,11 @@ namespace DotBlue
         void bind() const;
         void unbind() const;
         unsigned int getProgram() const { return programID; }
+        
+        // Uniform setters
+        void setFloat(const std::string &name, float value) const;
+        void setVec2(const std::string &name, float x, float y) const;
+        void setVec3(const std::string &name, float x, float y, float z) const;
 
     private:
         unsigned int programID;
@@ -85,5 +90,15 @@ namespace DotBlue
                           float x2, float y2, float u2, float v2);
     void GLDisableTextureFiltering(unsigned int textureID);
     void GLEnableTextureFiltering(unsigned int textureID);
+    
+    // Basic drawing functions
+    void GLLine(float x0, float y0, float x1, float y1);
+    void GLTriangle(float x0, float y0, float x1, float y1, float x2, float y2);
+    void GLRectangle(float x0, float y0, float x1, float y1);
+
+    // Shader-compatible drawing functions
+    void GLLineShader(float x0, float y0, float x1, float y1, float r, float g, float b);
+    void GLTriangleShader(float x0, float y0, float x1, float y1, float x2, float y2, float r, float g, float b);
+    void GLRectangleShader(float x0, float y0, float x1, float y1, float r, float g, float b);
 
 } // namespace DotBlue

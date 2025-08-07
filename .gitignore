@@ -2,3 +2,5 @@ build/
 CMakeFiles/
 CMakeCache.txt
 Makefile
+buildenv.bat
+govc.bat

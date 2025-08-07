@@ -97,4 +97,16 @@ void GLShader::unbind() const {
     glUseProgram(0);
 }
 
+void GLShader::setFloat(const std::string &name, float value) const {
+    glUniform1f(glGetUniformLocation(programID, name.c_str()), value);
+}
+
+void GLShader::setVec2(const std::string &name, float x, float y) const {
+    glUniform2f(glGetUniformLocation(programID, name.c_str()), x, y);
+}
+
+void GLShader::setVec3(const std::string &name, float x, float y, float z) const {
+    glUniform3f(glGetUniformLocation(programID, name.c_str()), x, y, z);
+}
+
 }
