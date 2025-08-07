@@ -22,7 +22,6 @@ const char *default_font_str = "C:/Windows/Fonts/consola.ttf";
 extern HDC glapp_hdc;
 #endif
 
-
 #include "imgui.h"
 #include "backends/imgui_impl_opengl3.h"
 #if defined(__linux__) || defined(__FreeBSD__)
@@ -31,6 +30,7 @@ extern HDC glapp_hdc;
 #include "backends/imgui_impl_win32.h"
 #endif
 
+#include "DotBlue/Input.h"
 
 #include <chrono>
 #include <string>
@@ -51,9 +51,13 @@ namespace DotBlue
     void InitApp()
     {
 
-        vec3 position(1.0f,2.0f,3.0f);
-        mat4 transform = Math::translate(mat4(1.0f), position);
+        Vec3 position(1.0f, 2.0f, 3.0f);
+        Mat4 transform = Math::translate(Mat4(1.0f), position);
         std::cout << "Current working directory: " << std::filesystem::current_path() << std::endl;
+
+        // Initialize input system
+        InitializeInput();
+
         glapp_default_font = LoadFont(default_font_str);
         SetApplicationTitle("DotBlueTheBlue!!");
         texid = DotBlue::LoadPNGTexture("../bud.png");
@@ -122,9 +126,44 @@ namespace DotBlue
         {
             std::cerr << "Textured shaders loaded successfully!" << std::endl;
         }
+        TestInputSystem();
+    }
+
+    void TestInputSystem()
+    {
+        std::cout << "DotBlue Input System Test" << std::endl;
+        std::cout << "=========================" << std::endl;
+
+        // Initialize the application
+
+        // Get input references
+        InputManager &input = GetInputManager();
+        InputBindings &bindings = GetInputBindings();
+
+        std::cout << "Input system initialized!" << std::endl;
+        std::cout << "Connected controllers: " << input.getControllerCount() << std::endl;
+
+        // Test some basic functionality
+        std::cout << "\nTesting key bindings:" << std::endl;
+        auto forwardKeys = bindings.getKeyBindings(Action::MOVE_FORWARD);
+        std::cout << "MOVE_FORWARD bound to " << forwardKeys.size() << " keys" << std::endl;
+
+        auto fireButtons = bindings.getMouseBindings(Action::FIRE_PRIMARY);
+        std::cout << "FIRE_PRIMARY bound to " << fireButtons.size() << " mouse buttons" << std::endl;
+
+        std::cout << "\nPress keys to test input (this is just initialization test)" << std::endl;
+        std::cout << "In a real game, you would use this in your main loop" << std::endl;
+
+        // Example of how you'd use it in a game loop:
+        std::cout << "if (bindings.isActionPressed(Action::MOVE_FORWARD, input)) {" << std::endl;
+        std::cout << "    movePlayerForward();" << std::endl;
+        std::cout << "}" << std::endl;
     }
     void ShutdownApp()
     {
+        // Shutdown input system
+        ShutdownInput();
+
         if (sound)
         {
             Mix_FreeChunk(sound);
@@ -148,8 +187,13 @@ namespace DotBlue
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
-            ImGui_ImplSDL2_ProcessEvent(&event); 
+            ImGui_ImplSDL2_ProcessEvent(&event);
 
+            // Handle input for our input system
+            if (g_inputManager)
+            {
+                g_inputManager->handleSDLEvent(event);
+            }
         }
     }
 #endif
@@ -158,10 +202,18 @@ namespace DotBlue
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
+            // Handle input for our input system
+            if (g_inputManager)
+            {
+                g_inputManager->handleSDLEvent(event);
+            }
         }
     }
     void UpdateAndRender()
     {
+        // Update input system
+        UpdateInput();
+
         //   auto start = std::chrono::high_resolution_clock::now();
         RGBA red{1.0, 0.0, 0.0, 1.0};
         RGBA green{0.0, 1.0, 0.0, 1.0};
@@ -190,25 +242,25 @@ namespace DotBlue
         // Modern colored shape rendering
         shader->bind();
         shader->setVec2("u_resolution", (float)width, (float)height);
-        GLLineShader(100.0f, 400.0f, 300.0f, 400.0f, 1.0f, 0.0f, 0.0f); // Red line
-        GLLineShader(100.0f, 450.0f, 300.0f, 450.0f, 0.0f, 1.0f, 0.0f); // Green line
+        GLLineShader(100.0f, 400.0f, 300.0f, 400.0f, 1.0f, 0.0f, 0.0f);                     // Red line
+        GLLineShader(100.0f, 450.0f, 300.0f, 450.0f, 0.0f, 1.0f, 0.0f);                     // Green line
         GLTriangleShader(500.0f, 400.0f, 550.0f, 350.0f, 600.0f, 400.0f, 1.0f, 1.0f, 0.0f); // Yellow triangle
-        GLRectangleShader(500.0f, 450.0f, 600.0f, 500.0f, 1.0f, 0.0f, 1.0f); // Magenta rectangle
+        GLRectangleShader(500.0f, 450.0f, 600.0f, 500.0f, 1.0f, 0.0f, 1.0f);                // Magenta rectangle
         shader->unbind();
-        
+
         // Draw textured atlas quad using modern rendering
         texturedShader->bind();
         texturedShader->setVec2("u_resolution", (float)width, (float)height);
         texturedShader->setInt("u_texture", 0);
         glActiveTexture(GL_TEXTURE0);
-        
+
         glapp_texture_atlas->select(16);
         // Get the UV coordinates for the selected atlas image
         float u0, v0, u1, v1;
         glapp_texture_atlas->getSelectedUVs(u0, v0, u1, v1);
         TexturedQuadShaderUV(glapp_texture_atlas->getTextureID(), 400.0f, 50.0f, 528.0f, 178.0f, u0, v0, u1, v1);
         texturedShader->unbind();
-        
+
         // Text rendering (GLPrintf still uses fixed-function, but it's for text which is more complex)
         // Set up matrices for text rendering only
         glMatrixMode(GL_PROJECTION);

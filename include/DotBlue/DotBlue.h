@@ -16,6 +16,9 @@
 #endif
 #endif
 
+#include "GLPlatform.h"
+#include "Input.h"
+
 namespace DotBlue
 {
 
@@ -24,4 +27,7 @@ namespace DotBlue
     DOTBLUE_API int DB_Test();
     DOTBLUE_API int Console_Test();
     DOTBLUE_API int GL_Test();
+    
+    // Test functions
+    DOTBLUE_API void TestInputSystem();
 }

@@ -23,6 +23,7 @@ set(DOTBLUE_SOURCES
     src/GLTextureAtlas.cpp
     src/GLShader.cpp
     src/GLMath.cpp
+    src/Input.cpp
     src/GLPlatformWin32.cpp
     src/GLPlatformUnix.cpp
     src/GLPlatform.cpp
@@ -117,7 +118,7 @@ if(MSVC)
     set(SDL2_ROOT "C:/Users/daver/LocalApps/SDL2-2.32.6")
     include_directories(${SDL2_ROOT}/include)
     target_link_libraries(DotBlue PRIVATE "${SDL2_ROOT}/lib/x64/SDL2.lib")
-    target_link_libraries(DotBlueTest PRIVATE DotBlue "${SDL2_ROOT}/lib/x64/SDL2.lib")
+    target_link_libraries(DotBlueTest PRIVATE DotBlue "${SDL2_ROOT}/lib/x64/SDL2.lib" "${SDL2_ROOT}/lib/x64/SDL2main.lib")
     
     include_directories("C:/Users/daver/source/dotblue/src")
     

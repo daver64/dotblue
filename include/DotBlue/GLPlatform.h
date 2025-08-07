@@ -20,12 +20,12 @@
 namespace DotBlue
 {
     // GLM type aliases for convenience
-    using vec2 = glm::vec2;
-    using vec3 = glm::vec3;
-    using vec4 = glm::vec4;
-    using mat3 = glm::mat3;
-    using mat4 = glm::mat4;
-    using quat = glm::quat;
+    using Vec2 = glm::vec2;
+    using Vec3 = glm::vec3;
+    using Vec4 = glm::vec4;
+    using Mat3 = glm::mat3;
+    using Mat4 = glm::mat4;
+    using Quat = glm::quat;
     
     struct GLFont
     {
@@ -40,9 +40,9 @@ namespace DotBlue
         // Constructor for convenience
         RGBA(float r = 1.0f, float g = 1.0f, float b = 1.0f, float a = 1.0f) : r(r), g(g), b(b), a(a) {}
         
-        // Convert to vec4
-        vec4 toVec4() const { return vec4(r, g, b, a); }
-        vec3 toVec3() const { return vec3(r, g, b); }
+        // Convert to Vec4
+        Vec4 toVec4() const { return Vec4(r, g, b, a); }
+        Vec3 toVec3() const { return Vec3(r, g, b); }
     };
 
     class GLShader
@@ -64,11 +64,11 @@ namespace DotBlue
         void setInt(const std::string &name, int value) const;
         
         // GLM-friendly uniform setters
-        void setVec2(const std::string &name, const vec2 &value) const;
-        void setVec3(const std::string &name, const vec3 &value) const;
-        void setVec4(const std::string &name, const vec4 &value) const;
-        void setMat3(const std::string &name, const mat3 &matrix) const;
-        void setMat4(const std::string &name, const mat4 &matrix) const;
+        void setVec2(const std::string &name, const Vec2 &value) const;
+        void setVec3(const std::string &name, const Vec3 &value) const;
+        void setVec4(const std::string &name, const Vec4 &value) const;
+        void setMat3(const std::string &name, const Mat3 &matrix) const;
+        void setMat4(const std::string &name, const Mat4 &matrix) const;
 
     private:
         unsigned int programID;
@@ -137,14 +137,14 @@ namespace DotBlue
     // 3D Math convenience functions
     namespace Math {
         // Create common transformation matrices
-        mat4 perspective(float fov, float aspect, float near, float far);
-        mat4 ortho(float left, float right, float bottom, float top, float near, float far);
-        mat4 lookAt(const vec3& eye, const vec3& center, const vec3& up);
+        Mat4 perspective(float fov, float aspect, float near, float far);
+        Mat4 ortho(float left, float right, float bottom, float top, float near, float far);
+        Mat4 lookAt(const Vec3& eye, const Vec3& center, const Vec3& up);
         
         // Transform operations
-        mat4 translate(const mat4& matrix, const vec3& translation);
-        mat4 rotate(const mat4& matrix, float angle, const vec3& axis);
-        mat4 scale(const mat4& matrix, const vec3& scaling);
+        Mat4 translate(const Mat4& matrix, const Vec3& translation);
+        Mat4 rotate(const Mat4& matrix, float angle, const Vec3& axis);
+        Mat4 scale(const Mat4& matrix, const Vec3& scaling);
         
         // Common constants
         const float PI = 3.14159265359f;

@@ -3,27 +3,27 @@
 namespace DotBlue {
 namespace Math {
 
-mat4 perspective(float fov, float aspect, float near, float far) {
+Mat4 perspective(float fov, float aspect, float near, float far) {
     return glm::perspective(fov, aspect, near, far);
 }
 
-mat4 ortho(float left, float right, float bottom, float top, float near, float far) {
+Mat4 ortho(float left, float right, float bottom, float top, float near, float far) {
     return glm::ortho(left, right, bottom, top, near, far);
 }
 
-mat4 lookAt(const vec3& eye, const vec3& center, const vec3& up) {
+Mat4 lookAt(const Vec3& eye, const Vec3& center, const Vec3& up) {
     return glm::lookAt(eye, center, up);
 }
 
-mat4 translate(const mat4& matrix, const vec3& translation) {
+Mat4 translate(const Mat4& matrix, const Vec3& translation) {
     return glm::translate(matrix, translation);
 }
 
-mat4 rotate(const mat4& matrix, float angle, const vec3& axis) {
+Mat4 rotate(const Mat4& matrix, float angle, const Vec3& axis) {
     return glm::rotate(matrix, angle, axis);
 }
 
-mat4 scale(const mat4& matrix, const vec3& scaling) {
+Mat4 scale(const Mat4& matrix, const Vec3& scaling) {
     return glm::scale(matrix, scaling);
 }
 
