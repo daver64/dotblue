@@ -173,7 +173,7 @@ namespace DotBlue
         // Test shader-based drawing
         shader->bind();
         shader->setVec2("u_resolution", (float)width, (float)height);
-        GLLineShader(100.0f, 450.0f, 300.0f, 450.0fDo, 0.0f, 1.0f, 0.0f); // Green line
+        GLLineShader(100.0f, 450.0f, 300.0f, 450.0f, 0.0f, 1.0f, 0.0f); // Green line
         GLTriangleShader(500.0f, 400.0f, 550.0f, 350.0f, 600.0f, 400.0f, 1.0f, 1.0f, 0.0f); // Yellow triangle
         GLRectangleShader(500.0f, 450.0f, 600.0f, 500.0f, 1.0f, 0.0f, 1.0f); // Magenta rectangle
         shader->unbind();
