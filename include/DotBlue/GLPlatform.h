@@ -3,6 +3,14 @@
 #include <string>
 #include "stb_truetype.h"
 #include "stb_image.h"
+
+// GLM Math Library
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #if defined(__linux__) || defined(__FreeBSD__)
 #include <SDL2/SDL.h>
 #endif
@@ -11,6 +19,14 @@
 #endif
 namespace DotBlue
 {
+    // GLM type aliases for convenience
+    using vec2 = glm::vec2;
+    using vec3 = glm::vec3;
+    using vec4 = glm::vec4;
+    using mat3 = glm::mat3;
+    using mat4 = glm::mat4;
+    using quat = glm::quat;
+    
     struct GLFont
     {
         unsigned int textureID;
@@ -20,6 +36,13 @@ namespace DotBlue
     struct RGBA
     {
         float r, g, b, a;
+        
+        // Constructor for convenience
+        RGBA(float r = 1.0f, float g = 1.0f, float b = 1.0f, float a = 1.0f) : r(r), g(g), b(b), a(a) {}
+        
+        // Convert to vec4
+        vec4 toVec4() const { return vec4(r, g, b, a); }
+        vec3 toVec3() const { return vec3(r, g, b); }
     };
 
     class GLShader
@@ -39,6 +62,13 @@ namespace DotBlue
         void setVec2(const std::string &name, float x, float y) const;
         void setVec3(const std::string &name, float x, float y, float z) const;
         void setInt(const std::string &name, int value) const;
+        
+        // GLM-friendly uniform setters
+        void setVec2(const std::string &name, const vec2 &value) const;
+        void setVec3(const std::string &name, const vec3 &value) const;
+        void setVec4(const std::string &name, const vec4 &value) const;
+        void setMat3(const std::string &name, const mat3 &matrix) const;
+        void setMat4(const std::string &name, const mat4 &matrix) const;
 
     private:
         unsigned int programID;
@@ -103,5 +133,27 @@ namespace DotBlue
                                float x0, float y0, float u0, float v0,
                                float x1, float y1, float u1, float v1,
                                float x2, float y2, float u2, float v2);
+
+    // 3D Math convenience functions
+    namespace Math {
+        // Create common transformation matrices
+        mat4 perspective(float fov, float aspect, float near, float far);
+        mat4 ortho(float left, float right, float bottom, float top, float near, float far);
+        mat4 lookAt(const vec3& eye, const vec3& center, const vec3& up);
+        
+        // Transform operations
+        mat4 translate(const mat4& matrix, const vec3& translation);
+        mat4 rotate(const mat4& matrix, float angle, const vec3& axis);
+        mat4 scale(const mat4& matrix, const vec3& scaling);
+        
+        // Common constants
+        const float PI = 3.14159265359f;
+        const float DEG_TO_RAD = PI / 180.0f;
+        const float RAD_TO_DEG = 180.0f / PI;
+        
+        // Utility functions
+        float radians(float degrees);
+        float degrees(float radians);
+    }
 
 } // namespace DotBlue

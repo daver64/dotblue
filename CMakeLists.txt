@@ -22,6 +22,7 @@ set(DOTBLUE_SOURCES
     src/GLImage.cpp
     src/GLTextureAtlas.cpp
     src/GLShader.cpp
+    src/GLMath.cpp
     src/GLPlatformWin32.cpp
     src/GLPlatformUnix.cpp
     src/GLPlatform.cpp
@@ -69,6 +70,8 @@ if(BUILD_TESTS)
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )
     if(MSVC)
+        # Add GLM to test target
+        target_include_directories(DotBlueTest PRIVATE "${GLM_ROOT}")
         target_link_libraries(DotBlueTest PRIVATE DotBlue "C:/Users/daver/LocalApps/glew-2.1.0/lib/Release/x64/glew32.lib")
         target_compile_definitions(DotBlue PRIVATE _CRT_SECURE_NO_WARNINGS)
     elseif(UNIX AND NOT APPLE)
@@ -103,6 +106,11 @@ if(MSVC)
     target_link_libraries(DotBlue PRIVATE
         "C:/Users/daver/LocalApps/glew-2.1.0/lib/Release/x64/glew32.lib"
     )
+    
+    # Set GLM root directory
+    set(GLM_ROOT "C:/Users/daver/LocalApps/glm-1.0.1")
+    include_directories(${GLM_ROOT})
+    
     set(SDL2_MIXER_ROOT "C:/Users/daver/LocalApps/SDL2_mixer-2.8.1")
     include_directories(${SDL2_MIXER_ROOT}/include)
 #endif()

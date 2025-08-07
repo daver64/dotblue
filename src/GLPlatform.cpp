@@ -51,6 +51,8 @@ namespace DotBlue
     void InitApp()
     {
 
+        vec3 position(1.0f,2.0f,3.0f);
+        mat4 transform = Math::translate(mat4(1.0f), position);
         std::cout << "Current working directory: " << std::filesystem::current_path() << std::endl;
         glapp_default_font = LoadFont(default_font_str);
         SetApplicationTitle("DotBlueTheBlue!!");

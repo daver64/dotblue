@@ -116,4 +116,25 @@ void GLShader::setInt(const std::string &name, int value) const {
     glUniform1i(glGetUniformLocation(programID, name.c_str()), value);
 }
 
+// GLM-friendly uniform setters
+void GLShader::setVec2(const std::string &name, const DotBlue::vec2 &value) const {
+    glUniform2fv(glGetUniformLocation(programID, name.c_str()), 1, &value[0]);
+}
+
+void GLShader::setVec3(const std::string &name, const DotBlue::vec3 &value) const {
+    glUniform3fv(glGetUniformLocation(programID, name.c_str()), 1, &value[0]);
+}
+
+void GLShader::setVec4(const std::string &name, const DotBlue::vec4 &value) const {
+    glUniform4fv(glGetUniformLocation(programID, name.c_str()), 1, &value[0]);
+}
+
+void GLShader::setMat3(const std::string &name, const DotBlue::mat3 &matrix) const {
+    glUniformMatrix3fv(glGetUniformLocation(programID, name.c_str()), 1, GL_FALSE, &matrix[0][0]);
+}
+
+void GLShader::setMat4(const std::string &name, const DotBlue::mat4 &matrix) const {
+    glUniformMatrix4fv(glGetUniformLocation(programID, name.c_str()), 1, GL_FALSE, &matrix[0][0]);
+}
+
 }
