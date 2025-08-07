@@ -1,5 +1,6 @@
 #include "DotBlue/DotBlue.h"
 #include "DotBlue/GLPlatform.h"
+
 #if defined(__linux__) || defined(__FreeBSD__)
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -7,32 +8,34 @@
 #include <GL/gl.h>
 #include <GL/glxext.h>
 const char *default_font_str = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf";
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
+
 #elif defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
 #include <GL/glew.h>
 #include <GL/gl.h>
+#include <SDL.h>
+#include <SDL_mixer.h>
+extern HWND hwnd;
 const char *default_font_str = "C:/Windows/Fonts/consola.ttf";
 extern HDC glapp_hdc;
 #endif
-#include <DotBlue/GLPlatform.h>
+
+
+#include "imgui.h"
+#include "backends/imgui_impl_opengl3.h"
+#if defined(__linux__) || defined(__FreeBSD__)
+#include "backends/imgui_impl_sdl2.h"
+#elif defined(_WIN32) || defined(__CYGWIN__)
+#include "backends/imgui_impl_win32.h"
+#endif
+
+
 #include <chrono>
 #include <string>
 #include <iostream>
 #include <filesystem>
-
-
-#if defined(WIN32) || defined(__CYGWIN__)
-#include <SDL.h>
-#include <SDL_mixer.h>
-extern HWND hwnd;
-#elif defined(__linux__) || defined(__FreeBSD__)
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_mixer.h>
-#endif
-#include "imgui.h"
-#include "backends/imgui_impl_opengl3.h"
-#include "backends/imgui_impl_win32.h"
-#include "backends/imgui_impl_sdl2.h"
 
 namespace DotBlue
 {
