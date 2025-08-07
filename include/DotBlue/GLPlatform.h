@@ -57,7 +57,12 @@ namespace DotBlue
         void draw_quad(float x, float y, float w, float h) const; // Draw selected image at (x, y) with size (w, h)
 
         int getImageCount() const { return rows * cols; }
-        unsigned int getTextureID() const { return textureID; } 
+        unsigned int getTextureID() const { return textureID; }
+        
+        // Get UV coordinates for selected image
+        void getSelectedUVs(float& u0_out, float& v0_out, float& u1_out, float& v1_out) const {
+            u0_out = u0; v0_out = v0; u1_out = u1; v1_out = v1;
+        } 
     private:
         unsigned int textureID;
         int atlasWidth, atlasHeight;
@@ -84,26 +89,16 @@ namespace DotBlue
     float GetCharWidth(const GLFont &font, char c);
     void SetApplicationTitle(const std::string &title);
     unsigned int LoadPNGTexture(const std::string &filename);
-    void TexturedQuad(unsigned int textureID, float x0, float y0, float x1, float y1);
-    void TexturedTriangle(unsigned int textureID,
-                          float x0, float y0, float u0, float v0,
-                          float x1, float y1, float u1, float v1,
-                          float x2, float y2, float u2, float v2);
     void GLDisableTextureFiltering(unsigned int textureID);
     void GLEnableTextureFiltering(unsigned int textureID);
-    
-    // Basic drawing functions
-    void GLLine(float x0, float y0, float x1, float y1);
-    void GLTriangle(float x0, float y0, float x1, float y1, float x2, float y2);
-    void GLRectangle(float x0, float y0, float x1, float y1);
 
-    // Shader-compatible drawing functions
+    // Modern shader-compatible drawing functions
     void GLLineShader(float x0, float y0, float x1, float y1, float r, float g, float b);
     void GLTriangleShader(float x0, float y0, float x1, float y1, float x2, float y2, float r, float g, float b);
-    void GLRectangleShader(float x0, float y0, float x1, float y1, float r, float g, float b);
-    
-    // Modern textured drawing functions
+    void GLRectangleShader(float x0, float y0, float x1, float y1, float r, float g, float b);    // Modern textured drawing functions
     void TexturedQuadShader(unsigned int textureID, float x0, float y0, float x1, float y1);
+    void TexturedQuadShaderUV(unsigned int textureID, float x0, float y0, float x1, float y1,
+                             float u0, float v0, float u1, float v1);
     void TexturedTriangleShader(unsigned int textureID,
                                float x0, float y0, float u0, float v0,
                                float x1, float y1, float u1, float v1,

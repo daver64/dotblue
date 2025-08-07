@@ -167,57 +167,53 @@ namespace DotBlue
         RGBA white{1.0, 1.0, 1.0, 1.0};
         int width = 800, height = 600; // You may want to make these dynamic
 
-        // Set up orthographic projection for 2D text rendering
+        // Set up viewport for modern OpenGL
         glViewport(0, 0, width, height);
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        glOrtho(0, width, height, 0, -1, 1); // Top-left is (0,0)
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
 
         glClearColor(0.2f, 0.3f, 0.4f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glEnable(GL_TEXTURE_2D);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        glColor4f(white.r, white.g, white.b, white.a);
-        TexturedQuad(texid, 100, 50, 300, 300);
+        // Modern textured rendering
+        texturedShader->bind();
+        texturedShader->setVec2("u_resolution", (float)width, (float)height);
+        texturedShader->setInt("u_texture", 0);
+        glActiveTexture(GL_TEXTURE0);
+        TexturedQuadShader(texid, 100.0f, 50.0f, 300.0f, 300.0f);
+        TexturedQuadShader(texid, 350.0f, 50.0f, 550.0f, 250.0f);
+        texturedShader->unbind();
 
-        glColor4f(red.r, red.g, red.b, red.a);
-        GLLine(100, 400, 300, 400); // Draw a red line (fixed-function)
-        
-        // Test shader-based drawing
+        // Modern colored shape rendering
         shader->bind();
         shader->setVec2("u_resolution", (float)width, (float)height);
+        GLLineShader(100.0f, 400.0f, 300.0f, 400.0f, 1.0f, 0.0f, 0.0f); // Red line
         GLLineShader(100.0f, 450.0f, 300.0f, 450.0f, 0.0f, 1.0f, 0.0f); // Green line
         GLTriangleShader(500.0f, 400.0f, 550.0f, 350.0f, 600.0f, 400.0f, 1.0f, 1.0f, 0.0f); // Yellow triangle
         GLRectangleShader(500.0f, 450.0f, 600.0f, 500.0f, 1.0f, 0.0f, 1.0f); // Magenta rectangle
         shader->unbind();
         
-        // Test textured shader-based drawing
+        // Draw textured atlas quad using modern rendering
         texturedShader->bind();
         texturedShader->setVec2("u_resolution", (float)width, (float)height);
-        texturedShader->setInt("u_texture", 0); // Use texture unit 0
-        
+        texturedShader->setInt("u_texture", 0);
         glActiveTexture(GL_TEXTURE0);
-        TexturedQuadShader(texid, 350.0f, 50.0f, 550.0f, 250.0f); // Draw textured quad with shader
         
-        // Draw textured triangle with custom UV coordinates
-        TexturedTriangleShader(glapp_texture_atlas->getTextureID(),
-                              50.0f, 450.0f, 0.0f, 0.0f,     // Bottom-left
-                              150.0f, 450.0f, 0.25f, 0.0f,   // Bottom-right  
-                              100.0f, 350.0f, 0.125f, 0.25f); // Top
+        glapp_texture_atlas->select(16);
+        // Get the UV coordinates for the selected atlas image
+        float u0, v0, u1, v1;
+        glapp_texture_atlas->getSelectedUVs(u0, v0, u1, v1);
+        TexturedQuadShaderUV(glapp_texture_atlas->getTextureID(), 400.0f, 50.0f, 528.0f, 178.0f, u0, v0, u1, v1);
         texturedShader->unbind();
         
-        // Draw a quad from the texture atlas
- glColor4f(white.r, white.g, white.b, white.a);
-        glapp_texture_atlas->select(16);
-        glapp_texture_atlas->bind();
-        glapp_texture_atlas->draw_quad(400, 50, 128, 128);
-        // GLEnableTextureFiltering(glapp_texture_atlas->getTextureID());
-        //  Now render text at pixel coordinates
+        // Text rendering (GLPrintf still uses fixed-function, but it's for text which is more complex)
+        // Set up matrices for text rendering only
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glOrtho(0, width, height, 0, -1, 1);
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
         GLPrintf(glapp_default_font, 100, 100, green, "Hello DotBlue World!");
 
         // Each frame:

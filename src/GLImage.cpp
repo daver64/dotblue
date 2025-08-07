@@ -54,39 +54,6 @@ unsigned int LoadPNGTexture(const std::string &filename)
     std::cout << "Texture id of " << filename << ": " << texID << std::endl;
     return texID;
 }
-void TexturedQuad(unsigned int textureID, float x0, float y0, float x1, float y1)
-{
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex2f(x0, y0);
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex2f(x1, y0);
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex2f(x1, y1);
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex2f(x0, y1);
-    glEnd();
-}
-
-void TexturedTriangle(unsigned int textureID,
-                      float x0, float y0, float u0, float v0,
-                      float x1, float y1, float u1, float v1,
-                      float x2, float y2, float u2, float v2)
-{
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glBegin(GL_TRIANGLES);
-    glTexCoord2f(u0, v0);
-    glVertex2f(x0, y0);
-    glTexCoord2f(u1, v1);
-    glVertex2f(x1, y1);
-    glTexCoord2f(u2, v2);
-    glVertex2f(x2, y2);
-    glEnd();
-}
-
 void GLDisableTextureFiltering(unsigned int textureID) {
     glBindTexture(GL_TEXTURE_2D, textureID);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -97,33 +64,6 @@ void GLEnableTextureFiltering(unsigned int textureID) {
     glBindTexture(GL_TEXTURE_2D, textureID);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-}
-
-void GLLine(float x0, float y0, float x1, float y1) {
-    glDisable(GL_TEXTURE_2D);
-    glBegin(GL_LINES);
-    glVertex2f(x0, y0);
-    glVertex2f(x1, y1);
-    glEnd();
-}
-
-void GLTriangle(float x0, float y0, float x1, float y1, float x2, float y2) {
-    glDisable(GL_TEXTURE_2D);
-    glBegin(GL_TRIANGLES);
-    glVertex2f(x0, y0);
-    glVertex2f(x1, y1);
-    glVertex2f(x2, y2);
-    glEnd();
-}
-
-void GLRectangle(float x0, float y0, float x1, float y1) {
-    glDisable(GL_TEXTURE_2D);
-    glBegin(GL_QUADS);
-    glVertex2f(x0, y0);
-    glVertex2f(x1, y0);
-    glVertex2f(x1, y1);
-    glVertex2f(x0, y1);
-    glEnd();
 }
 
 // Modern shader-compatible versions with efficient buffer reuse
@@ -291,6 +231,24 @@ void TexturedQuadShader(unsigned int textureID, float x0, float y0, float x1, fl
         x1, y0, 0.0f, 1.0f, 0.0f,  // Bottom-right
         x1, y1, 0.0f, 1.0f, 1.0f,  // Top-right
         x0, y1, 0.0f, 0.0f, 1.0f   // Top-left
+    };
+
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glBindVertexArray(texturedQuadVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, texturedQuadVBO);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+}
+
+void TexturedQuadShaderUV(unsigned int textureID, float x0, float y0, float x1, float y1, 
+                         float u0, float v0, float u1, float v1) {
+    initTexturedQuadBuffers();
+    
+    float vertices[] = {
+        x0, y0, 0.0f, u0, v0,  // Bottom-left: pos(x,y,z) + tex(u,v)
+        x1, y0, 0.0f, u1, v0,  // Bottom-right
+        x1, y1, 0.0f, u1, v1,  // Top-right
+        x0, y1, 0.0f, u0, v1   // Top-left
     };
 
     glBindTexture(GL_TEXTURE_2D, textureID);
