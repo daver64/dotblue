@@ -80,8 +80,11 @@ bool GLShader::loadFromFiles(const std::string& vertexPath, const std::string& f
     std::ifstream vFile(vertexPath);
     std::ifstream fFile(fragmentPath);
     if (!vFile.is_open() || !fFile.is_open()) {
-        std::cerr << "Failed to open shader files: " << vertexPath << ", " << fragmentPath << std::endl;
+        std::cerr << "Failed to open shader files:\n" << vertexPath << "\n" << fragmentPath << std::endl;
         return false;
+    }
+    else {
+        std::cout << "Shader files opened successfully:\n" << vertexPath << "\n" << fragmentPath << std::endl;
     }
     std::stringstream vStream, fStream;
     vStream << vFile.rdbuf();
@@ -107,6 +110,10 @@ void GLShader::setVec2(const std::string &name, float x, float y) const {
 
 void GLShader::setVec3(const std::string &name, float x, float y, float z) const {
     glUniform3f(glGetUniformLocation(programID, name.c_str()), x, y, z);
+}
+
+void GLShader::setInt(const std::string &name, int value) const {
+    glUniform1i(glGetUniformLocation(programID, name.c_str()), value);
 }
 
 }

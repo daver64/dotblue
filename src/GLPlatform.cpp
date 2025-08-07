@@ -47,6 +47,7 @@ namespace DotBlue
     Mix_Chunk *sound = nullptr;
     Mix_Music *music = nullptr;
     DotBlue::GLShader *shader = nullptr;
+    DotBlue::GLShader *texturedShader = nullptr;
     void InitApp()
     {
 
@@ -109,6 +110,16 @@ namespace DotBlue
         {
             std::cerr << "Shaders loaded successfully!" << std::endl;
         }
+
+        texturedShader = new DotBlue::GLShader();
+        if (!texturedShader->loadFromFiles("../shaders/textured.vert", "../shaders/textured.frag"))
+        {
+            std::cerr << "Failed to load textured shaders!" << std::endl;
+        }
+        else
+        {
+            std::cerr << "Textured shaders loaded successfully!" << std::endl;
+        }
     }
     void ShutdownApp()
     {
@@ -121,6 +132,10 @@ namespace DotBlue
         SDL_Quit();
         delete glapp_texture_atlas;
         glapp_texture_atlas = nullptr;
+        delete shader;
+        shader = nullptr;
+        delete texturedShader;
+        texturedShader = nullptr;
         if (texid)
             glDeleteTextures(1, &texid);
         texid = 0;
@@ -180,6 +195,21 @@ namespace DotBlue
         GLTriangleShader(500.0f, 400.0f, 550.0f, 350.0f, 600.0f, 400.0f, 1.0f, 1.0f, 0.0f); // Yellow triangle
         GLRectangleShader(500.0f, 450.0f, 600.0f, 500.0f, 1.0f, 0.0f, 1.0f); // Magenta rectangle
         shader->unbind();
+        
+        // Test textured shader-based drawing
+        texturedShader->bind();
+        texturedShader->setVec2("u_resolution", (float)width, (float)height);
+        texturedShader->setInt("u_texture", 0); // Use texture unit 0
+        
+        glActiveTexture(GL_TEXTURE0);
+        TexturedQuadShader(texid, 350.0f, 50.0f, 550.0f, 250.0f); // Draw textured quad with shader
+        
+        // Draw textured triangle with custom UV coordinates
+        TexturedTriangleShader(glapp_texture_atlas->getTextureID(),
+                              50.0f, 450.0f, 0.0f, 0.0f,     // Bottom-left
+                              150.0f, 450.0f, 0.25f, 0.0f,   // Bottom-right  
+                              100.0f, 350.0f, 0.125f, 0.25f); // Top
+        texturedShader->unbind();
         
         // Draw a quad from the texture atlas
  glColor4f(white.r, white.g, white.b, white.a);
