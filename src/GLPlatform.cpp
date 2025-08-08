@@ -42,8 +42,9 @@ namespace DotBlue
         // Initialize input system
         InitializeInput();
 
-        // Load default font
-        glapp_default_font = LoadFont(default_font_str);
+        // Load default font (temporarily disabled due to STB crash on Linux)
+        // glapp_default_font = LoadFont(default_font_str);
+        std::cout << "Font loading disabled to prevent STB crash on Linux" << std::endl;
         
         // Set application title
         SetApplicationTitle("DotBlue Engine");
