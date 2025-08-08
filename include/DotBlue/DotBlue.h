@@ -44,6 +44,7 @@ namespace DotBlue
     );
     
     DOTBLUE_API int RunGame(std::atomic<bool>& running);
+    DOTBLUE_API int RunGameThreaded(std::atomic<bool>& running);
     
     // Test functions
     DOTBLUE_API void TestInputSystem();

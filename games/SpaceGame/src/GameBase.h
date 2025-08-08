@@ -17,6 +17,9 @@ public:
     // Main game loop
     int Run();
     
+    // Threaded game loop (prevents window-move freezing)
+    int RunThreaded();
+    
     // Override these in your game
     virtual bool Initialize() = 0;
     virtual void Update(float deltaTime) = 0;
@@ -41,4 +44,12 @@ int main() \
 { \
     GameClass game; \
     return game.Run(); \
+}
+
+// Threaded version that prevents window-move freezing
+#define DOTBLUE_GAME_MAIN_THREADED(GameClass) \
+int main() \
+{ \
+    GameClass game; \
+    return game.RunThreaded(); \
 }

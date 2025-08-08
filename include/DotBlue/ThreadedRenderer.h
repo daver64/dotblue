@@ -1,0 +1,109 @@
+#pragma once
+
+#include <atomic>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <chrono>
+
+#ifndef DOTBLUE_API
+#if defined(_WIN32) || defined(__CYGWIN__)
+#ifdef DOTBLUE_STATIC
+#define DOTBLUE_API
+#elif defined(DOTBLUE_EXPORTS)
+#define DOTBLUE_API __declspec(dllexport)
+#else
+#define DOTBLUE_API __declspec(dllimport)
+#endif
+#else
+#ifdef DOTBLUE_STATIC
+#define DOTBLUE_API
+#else
+#define DOTBLUE_API __attribute__((visibility("default")))
+#endif
+#endif
+#endif
+
+namespace DotBlue
+{
+    class InputManager;
+    class InputBindings;
+
+    class DOTBLUE_API ThreadedRenderer
+    {
+    public:
+        ThreadedRenderer();
+        ~ThreadedRenderer();
+
+        // Initialize the threaded renderer (must be called from main thread with active OpenGL context)
+        bool Initialize();
+        
+        // Start the render thread
+        void Start();
+        
+        // Stop the render thread and wait for it to finish
+        void Stop();
+        
+        // Update render state from main thread (called during window events)
+        void UpdateRenderState(float deltaTime, const InputManager& input, const InputBindings& bindings);
+        
+        // Signal that window size has changed
+        void OnWindowResize(int width, int height);
+        
+        // Check if renderer is running
+        bool IsRunning() const { return m_running.load(); }
+
+    private:
+        // Render thread main function
+        void RenderThreadMain();
+        
+        // Create shared OpenGL context for render thread
+        bool CreateRenderContext();
+        
+        // Cleanup render context
+        void CleanupRenderContext();
+
+        // Thread management
+        std::atomic<bool> m_running;
+        std::atomic<bool> m_shouldStop;
+        std::unique_ptr<std::thread> m_renderThread;
+        
+        // Frame synchronization
+        std::mutex m_stateMutex;
+        std::condition_variable m_frameReady;
+        std::atomic<bool> m_newFrameAvailable;
+        
+        // Render state (protected by mutex)
+        struct RenderState
+        {
+            float deltaTime;
+            int windowWidth;
+            int windowHeight;
+            bool inputStateValid;
+            // Copy of input state for thread safety
+            // We'll copy the relevant input data here
+        } m_renderState;
+        
+        // Platform-specific context data
+#if defined(_WIN32)
+        void* m_sharedContext;  // HGLRC
+        void* m_deviceContext;  // HDC
+#elif defined(__linux__) || defined(__FreeBSD__)
+        void* m_display;        // Display*
+        void* m_sharedContext;  // GLXContext
+        unsigned long m_window; // Window
+#endif
+        
+        // Timing
+        std::chrono::high_resolution_clock::time_point m_lastFrameTime;
+        static constexpr double TARGET_FRAME_TIME_MS = 1000.0 / 60.0; // 60 FPS
+    };
+
+    // Global threaded renderer instance management
+    DOTBLUE_API bool InitializeThreadedRenderer();
+    DOTBLUE_API void ShutdownThreadedRenderer();
+    DOTBLUE_API ThreadedRenderer* GetThreadedRenderer();
+    
+    // Enhanced window run function that uses threaded renderer
+    DOTBLUE_API void RunWindowThreaded(std::atomic<bool>& running);
+}

@@ -4,6 +4,25 @@
 #include "stb_truetype.h"
 #include "stb_image.h"
 
+// Include DOTBLUE_API definition
+#ifndef DOTBLUE_API
+#if defined(_WIN32) || defined(__CYGWIN__)
+#ifdef DOTBLUE_STATIC
+#define DOTBLUE_API
+#elif defined(DOTBLUE_EXPORTS)
+#define DOTBLUE_API __declspec(dllexport)
+#else
+#define DOTBLUE_API __declspec(dllimport)
+#endif
+#else
+#ifdef DOTBLUE_STATIC
+#define DOTBLUE_API
+#else
+#define DOTBLUE_API __attribute__((visibility("default")))
+#endif
+#endif
+#endif
+
 // GLM Math Library
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -48,27 +67,27 @@ namespace DotBlue
     class GLShader
     {
     public:
-        GLShader();
-        ~GLShader();
+        DOTBLUE_API GLShader();
+        DOTBLUE_API ~GLShader();
 
-        bool load(const std::string &vertexSrc, const std::string &fragmentSrc);
-        bool loadFromFiles(const std::string &vertexPath, const std::string &fragmentPath);
-        void bind() const;
-        void unbind() const;
+        DOTBLUE_API bool load(const std::string &vertexSrc, const std::string &fragmentSrc);
+        DOTBLUE_API bool loadFromFiles(const std::string &vertexPath, const std::string &fragmentPath);
+        DOTBLUE_API void bind() const;
+        DOTBLUE_API void unbind() const;
         unsigned int getProgram() const { return programID; }
         
         // Uniform setters
-        void setFloat(const std::string &name, float value) const;
-        void setVec2(const std::string &name, float x, float y) const;
-        void setVec3(const std::string &name, float x, float y, float z) const;
-        void setInt(const std::string &name, int value) const;
+        DOTBLUE_API void setFloat(const std::string &name, float value) const;
+        DOTBLUE_API void setVec2(const std::string &name, float x, float y) const;
+        DOTBLUE_API void setVec3(const std::string &name, float x, float y, float z) const;
+        DOTBLUE_API void setInt(const std::string &name, int value) const;
         
         // GLM-friendly uniform setters
-        void setVec2(const std::string &name, const Vec2 &value) const;
-        void setVec3(const std::string &name, const Vec3 &value) const;
-        void setVec4(const std::string &name, const Vec4 &value) const;
-        void setMat3(const std::string &name, const Mat3 &matrix) const;
-        void setMat4(const std::string &name, const Mat4 &matrix) const;
+        DOTBLUE_API void setVec2(const std::string &name, const Vec2 &value) const;
+        DOTBLUE_API void setVec3(const std::string &name, const Vec3 &value) const;
+        DOTBLUE_API void setVec4(const std::string &name, const Vec4 &value) const;
+        DOTBLUE_API void setMat3(const std::string &name, const Mat3 &matrix) const;
+        DOTBLUE_API void setMat4(const std::string &name, const Mat4 &matrix) const;
 
     private:
         unsigned int programID;
@@ -112,24 +131,24 @@ namespace DotBlue
     #endif
     void HandleInput();
     void GLSwapBuffers();
-    void GLSleep(int ms);
-    GLFont LoadFont(const char *fontPath, float pixelHeight = 14.0f);
-    void GLPrintf(const GLFont &font, float x, float y, const RGBA &color, const char *fmt, ...);
-    float GetCharHeight(const GLFont &font, char c);
-    float GetCharWidth(const GLFont &font, char c);
-    void SetApplicationTitle(const std::string &title);
-    unsigned int LoadPNGTexture(const std::string &filename);
-    void GLDisableTextureFiltering(unsigned int textureID);
-    void GLEnableTextureFiltering(unsigned int textureID);
+    DOTBLUE_API void GLSleep(int ms);
+    DOTBLUE_API GLFont LoadFont(const char *fontPath, float pixelHeight = 14.0f);
+    DOTBLUE_API void GLPrintf(const GLFont &font, float x, float y, const RGBA &color, const char *fmt, ...);
+    DOTBLUE_API float GetCharHeight(const GLFont &font, char c);
+    DOTBLUE_API float GetCharWidth(const GLFont &font, char c);
+    DOTBLUE_API void SetApplicationTitle(const std::string &title);
+    DOTBLUE_API unsigned int LoadPNGTexture(const std::string &filename);
+    DOTBLUE_API void GLDisableTextureFiltering(unsigned int textureID);
+    DOTBLUE_API void GLEnableTextureFiltering(unsigned int textureID);
 
     // Modern shader-compatible drawing functions
-    void GLLineShader(float x0, float y0, float x1, float y1, float r, float g, float b);
-    void GLTriangleShader(float x0, float y0, float x1, float y1, float x2, float y2, float r, float g, float b);
-    void GLRectangleShader(float x0, float y0, float x1, float y1, float r, float g, float b);    // Modern textured drawing functions
-    void TexturedQuadShader(unsigned int textureID, float x0, float y0, float x1, float y1);
-    void TexturedQuadShaderUV(unsigned int textureID, float x0, float y0, float x1, float y1,
+    DOTBLUE_API void GLLineShader(float x0, float y0, float x1, float y1, float r, float g, float b);
+    DOTBLUE_API void GLTriangleShader(float x0, float y0, float x1, float y1, float x2, float y2, float r, float g, float b);
+    DOTBLUE_API void GLRectangleShader(float x0, float y0, float x1, float y1, float r, float g, float b);    // Modern textured drawing functions
+    DOTBLUE_API void TexturedQuadShader(unsigned int textureID, float x0, float y0, float x1, float y1);
+    DOTBLUE_API void TexturedQuadShaderUV(unsigned int textureID, float x0, float y0, float x1, float y1,
                              float u0, float v0, float u1, float v1);
-    void TexturedTriangleShader(unsigned int textureID,
+    DOTBLUE_API void TexturedTriangleShader(unsigned int textureID,
                                float x0, float y0, float u0, float v0,
                                float x1, float y1, float u1, float v1,
                                float x2, float y2, float u2, float v2);

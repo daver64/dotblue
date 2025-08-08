@@ -2,6 +2,7 @@
 #ifdef _WIN32
 #include <DotBlue/DotBlue.h>
 #include <DotBlue/GLPlatform.h>
+#include <DotBlue/ThreadedRenderer.h>
 #include <windows.h>
 #include <GL/glew.h>
 #include <GL/gl.h>
@@ -21,19 +22,33 @@
 #pragma comment(lib, "opengl32.lib")
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+// Global flag to track if we're in a size/move operation
+static bool g_inSizeMove = false;
+
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     if (ImGui_ImplWin32_WndProcHandler(hwnd, uMsg, wParam, lParam))
         return true; // ImGui handled the message
 
-    if (uMsg == WM_CLOSE || uMsg == WM_DESTROY)
+    switch (uMsg)
     {
+    case WM_ENTERSIZEMOVE:
+        g_inSizeMove = true;
+        return 0;
+    case WM_EXITSIZEMOVE:
+        g_inSizeMove = false;
+        return 0;
+    case WM_CLOSE:
+    case WM_DESTROY:
         PostQuitMessage(0);
         return 0;
     }
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 HWND hwnd;
+HDC hdc;
+HGLRC modernContext;
+HGLRC tempContext;
 namespace DotBlue
 {
     
@@ -165,6 +180,187 @@ namespace DotBlue
         {
             SetWindowTextA(hwnd, title.c_str());
         }
+    }
+
+    // Timer-based rendering to prevent window move freezing
+    void CALLBACK TimerRenderProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
+    {
+        // Make the context current
+        wglMakeCurrent(hdc, modernContext);
+        
+        // Calculate delta time
+        static auto lastTime = std::chrono::high_resolution_clock::now();
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        float deltaTime = std::chrono::duration<float>(currentTime - lastTime).count();
+        lastTime = currentTime;
+
+        // Update input system
+        UpdateInput();
+        InputManager& input = GetInputManager();
+        InputBindings& bindings = GetInputBindings();
+
+        // Call game input and update
+        DotBlue::CallGameInput(input, bindings);
+        DotBlue::CallGameUpdate(deltaTime);
+
+        // Set up viewport
+        RECT rect;
+        GetClientRect(hwnd, &rect);
+        int width = rect.right - rect.left;
+        int height = rect.bottom - rect.top;
+        glViewport(0, 0, width, height);
+
+        // Default clear color
+        glClearColor(0.2f, 0.3f, 0.4f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        // Call game rendering
+        DotBlue::CallGameRender();
+
+        // ImGui rendering
+        ImGuiIO &io = ImGui::GetIO();
+        io.DisplaySize.x = static_cast<float>(width);
+        io.DisplaySize.y = static_cast<float>(height);
+
+        ImGui_ImplWin32_NewFrame();
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui::NewFrame();
+
+        // Default ImGui demo
+        ImGui::Begin("DotBlue Engine (Timer-based)");
+        ImGui::Text("Welcome to DotBlue!");
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 
+                   1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::End();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        // Swap buffers
+        SwapBuffers(hdc);
+    }
+
+    void RunWindowThreaded(std::atomic<bool> &running)
+    {
+        // Create window (copied from existing RunWindow function)
+        WNDCLASS wc = {};
+        wc.lpfnWndProc = WindowProc;
+        wc.hInstance = GetModuleHandle(nullptr);
+        wc.lpszClassName = "GLWindowClassThreaded";
+
+        RegisterClass(&wc);
+
+        hwnd = CreateWindowEx(
+            0, "GLWindowClassThreaded", "DotBlue Engine (Timer-based)",
+            WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            CW_USEDEFAULT, CW_USEDEFAULT, 800, 600,
+            nullptr, nullptr, wc.hInstance, nullptr);
+
+        hdc = GetDC(hwnd);
+        glapp_hdc = hdc;
+
+        PIXELFORMATDESCRIPTOR pfd = {};
+        pfd.nSize = sizeof(pfd);
+        pfd.nVersion = 1;
+        pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+        pfd.iPixelType = PFD_TYPE_RGBA;
+        pfd.cColorBits = 32;
+
+        int pixelFormat = ChoosePixelFormat(hdc, &pfd);
+        SetPixelFormat(hdc, pixelFormat, &pfd);
+
+        // Create OpenGL context
+        tempContext = wglCreateContext(hdc);
+        wglMakeCurrent(hdc, tempContext);
+
+        // Try to create a modern context
+        modernContext = nullptr;
+        PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = 
+            (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
+
+        if (wglCreateContextAttribsARB)
+        {
+            const int contextAttribs[] = {
+                WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
+                WGL_CONTEXT_MINOR_VERSION_ARB, 4,
+                WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB,
+                0
+            };
+            modernContext = wglCreateContextAttribsARB(hdc, 0, contextAttribs);
+            if (modernContext)
+            {
+                wglMakeCurrent(nullptr, nullptr);
+                wglDeleteContext(tempContext);
+                wglMakeCurrent(hdc, modernContext);
+                std::cout << "Created modern OpenGL 4.4 context" << std::endl;
+            }
+        }
+
+        if (!modernContext)
+        {
+            modernContext = tempContext;
+            std::cout << "Using legacy OpenGL context" << std::endl;
+        }
+
+        if (glewInit() != GLEW_OK)
+        {
+            std::cerr << "Failed to initialize GLEW!" << std::endl;
+            exit(1);
+        }
+
+        ImGui::CreateContext();
+        ImGui_ImplWin32_Init(hwnd);
+        ImGui_ImplOpenGL3_Init("#version 400");
+        DotBlue::InitApp();
+
+        std::cout << "Starting timer-based rendering loop..." << std::endl;
+
+        // Set up a timer for 60 FPS rendering (16.67ms intervals)
+        UINT_PTR timerId = SetTimer(hwnd, 1, 16, TimerRenderProc);
+        if (!timerId)
+        {
+            std::cerr << "Failed to create render timer!" << std::endl;
+            running = false;
+            return;
+        }
+
+        // Main message loop - this now only handles messages, rendering is timer-driven
+        while (running)
+        {
+            MSG msg;
+            BOOL result = GetMessage(&msg, nullptr, 0, 0);
+            
+            if (result == 0) // WM_QUIT
+            {
+                running = false;
+                break;
+            }
+            else if (result == -1) // Error
+            {
+                std::cerr << "GetMessage error" << std::endl;
+                break;
+            }
+            
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+
+        // Cleanup timer
+        KillTimer(hwnd, timerId);
+
+        std::cout << "Stopping timer-based renderer..." << std::endl;
+
+        DotBlue::ShutdownApp();
+        wglMakeCurrent(nullptr, nullptr);
+        if (modernContext)
+        {
+            wglDeleteContext(modernContext);
+        }
+        ReleaseDC(hwnd, hdc);
+        DestroyWindow(hwnd);
     }
 
 }

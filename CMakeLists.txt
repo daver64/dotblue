@@ -27,6 +27,7 @@ set(DOTBLUE_SOURCES
     src/GLPlatformUnix.cpp
     src/GLPlatform.cpp
     src/GLPrintf.cpp
+    src/ThreadedRenderer.cpp
     src/imgui.cpp
     src/imgui_draw.cpp
     src/imgui_tables.cpp

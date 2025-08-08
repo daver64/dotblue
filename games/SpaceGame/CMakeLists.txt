@@ -38,6 +38,9 @@ if(WIN32)
     target_include_directories(SpaceGame PRIVATE ${GLM_ROOT})
     target_include_directories(SpaceGame PRIVATE ${SDL2_ROOT}/include)
     target_include_directories(SpaceGame PRIVATE ${SDL2_MIXER_ROOT}/include)
+    
+    # Add GLEW include directory
+    target_include_directories(SpaceGame PRIVATE "C:/Users/daver/LocalApps/glew-2.1.0/include")
 endif()
 
 # Link with DotBlue library directly
@@ -56,6 +59,8 @@ if(WIN32)
     target_link_libraries(SpaceGame PRIVATE 
         ${SDL2_ROOT}/lib/x64/SDL2.lib
         ${SDL2_ROOT}/lib/x64/SDL2main.lib
+        "C:/Users/daver/LocalApps/glew-2.1.0/lib/Release/x64/glew32.lib"
+        opengl32.lib
     )
 else()
     # On Linux, link with system SDL2 libraries

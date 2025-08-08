@@ -2,6 +2,7 @@
 #include "DotBlue/MemChunkAllocator.h"
 #include "DotBlue/ColourConsole.h"
 #include "DotBlue/GLPlatform.h"
+#include "DotBlue/ThreadedRenderer.h"
 #include <iostream>
 #include <cstring>
 
@@ -88,6 +89,13 @@ int RunGame(std::atomic<bool>& running)
     // This will create window, initialize OpenGL, call InitApp, etc.
     // The game callbacks will be called from within the main loop
     DotBlue::RunWindow(running);
+    return 0;
+}
+
+int RunGameThreaded(std::atomic<bool>& running)
+{
+    // This will create window with threaded renderer
+    DotBlue::RunWindowThreaded(running);
     return 0;
 }
 
