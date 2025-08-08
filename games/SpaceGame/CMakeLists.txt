@@ -27,8 +27,12 @@ set(GAME_SOURCES
     src/GameBase.cpp
 )
 
-# Set ImGui path
-set(IMGUI_DIR "C:/Users/daver/LocalApps/imgui" CACHE PATH "Path to ImGui")
+# Set ImGui path - use local copy for cross-platform consistency
+if(WIN32)
+    set(IMGUI_DIR "C:/Users/daver/LocalApps/imgui" CACHE PATH "Path to ImGui")
+else()
+    set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../imgui" CACHE PATH "Path to ImGui")
+endif()
 
 # ImGui source files
 set(IMGUI_SOURCES
@@ -43,8 +47,6 @@ set(IMGUI_SOURCES
 # Add platform-specific ImGui backend
 if(WIN32)
     list(APPEND IMGUI_SOURCES ${IMGUI_DIR}/backends/imgui_impl_win32.cpp)
-elseif(UNIX AND NOT APPLE)
-    list(APPEND IMGUI_SOURCES ${IMGUI_DIR}/backends/imgui_impl_sdl2.cpp)
 endif()
 
 # Create executable
@@ -55,6 +57,7 @@ target_include_directories(SpaceGame PRIVATE ${DOTBLUE_DIR}/include)
 
 # Include ImGui headers
 target_include_directories(SpaceGame PRIVATE ${IMGUI_DIR})
+target_include_directories(SpaceGame PRIVATE ${IMGUI_DIR}/backends)
 
 # Include GLM headers (Windows only)
 if(WIN32)
@@ -84,7 +87,6 @@ else()
         GL
         GLEW
         X11
-        stb  # Still need STB for ImGui's rectpack functionality
     )
 endif()
 
