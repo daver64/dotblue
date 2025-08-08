@@ -44,7 +44,6 @@ private:
     float rotation;
     DotBlue::GLShader colorShader;
     DotBlue::GLShader textureShader;
-    bool showDemoWindow;
     bool showSpaceGameUI;
     
 public:
@@ -76,7 +75,6 @@ public:
 #endif
         ImGui_ImplOpenGL3_Init("#version 130");
         
-        showDemoWindow = true;
         showSpaceGameUI = true;
         
         // Load shaders
@@ -174,16 +172,10 @@ public:
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 
                        1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::SliderFloat("Rotation Speed", &rotation, 0.0f, 360.0f);
-            ImGui::Checkbox("Show Demo Window", &showDemoWindow);
             if (ImGui::Button("Reset Rotation")) {
                 rotation = 0.0f;
             }
             ImGui::End();
-        }
-        
-        // Show ImGui demo window if requested
-        if (showDemoWindow) {
-            ImGui::ShowDemoWindow(&showDemoWindow);
         }
         
         ImGui::Render();

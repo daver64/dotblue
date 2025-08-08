@@ -98,6 +98,11 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/assets")
     file(COPY assets/ DESTINATION ${CMAKE_BINARY_DIR}/assets/)
 endif()
 
+# Copy shaders to build directory
+if(EXISTS "${CMAKE_SOURCE_DIR}/shaders")
+    file(COPY shaders/ DESTINATION ${CMAKE_BINARY_DIR}/shaders/)
+endif()
+
 # Platform-specific settings
 if(WIN32)
     # Copy DotBlue DLL to output directory on Windows
