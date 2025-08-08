@@ -8,6 +8,9 @@
 #include <windows.h>
 #include <GL/glew.h>
 #include <GL/gl.h>
+#elif defined(__linux__) || defined(__FreeBSD__)
+#include <GL/glew.h>
+#include <GL/gl.h>
 #endif
 
 #include <iostream>
@@ -61,9 +64,9 @@ public:
     
     void Render() override 
     {
-        // Clear screen with dark blue space color
-        glClearColor(0.1f, 0.1f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        // Don't clear here - DotBlue handles screen clearing
+        // glClearColor(0.1f, 0.1f, 0.3f, 1.0f);
+        // glClear(GL_COLOR_BUFFER_BIT);
         
         // Get window size for shader uniform
         int width = 800, height = 600; // Default window size, you can get actual size from DotBlue
@@ -99,6 +102,7 @@ public:
         if (starTexture > 0) {
             textureShader.bind();
             textureShader.setVec2("u_resolution", (float)width, (float)height);
+            textureShader.setInt("u_texture", 0); // Set texture unit 0
             DotBlue::TexturedQuadShader(starTexture, 500.0f, 100.0f, 580.0f, 180.0f);
         }
         

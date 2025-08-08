@@ -15,12 +15,17 @@
 #include <thread>
 #include <DotBlue/GLPlatform.h>
 #include <DotBlue/ThreadedRenderer.h>
+#include <DotBlue/Input.h>
 #include "imgui.h"
 #include "backends/imgui_impl_opengl3.h"
+
+// Global X11 variables (accessible by ThreadedRenderer.cpp)
+Display *display = nullptr;
+Window win = 0;
+GLXContext modernCtx = nullptr;
+
 namespace DotBlue
 {
-    Display *display = nullptr;
-    Window win = 0;
     void GLSwapBuffers()
     {
         glXSwapBuffers(display, win);
@@ -121,7 +126,7 @@ namespace DotBlue
         glXCreateContextAttribsARB = (PFNGLXCREATECONTEXTATTRIBSARBPROC)
             glXGetProcAddressARB((const GLubyte *)"glXCreateContextAttribsARB");
 
-        GLXContext modernCtx = nullptr;
+        modernCtx = nullptr;
 
         if (glXCreateContextAttribsARB && fbc && fbcount > 0)
         {
@@ -250,9 +255,6 @@ namespace DotBlue
         XCloseDisplay(display);
     }
 
-    extern Display *display;
-    extern Window win;
-
     void SetApplicationTitle(const std::string &title)
     {
         if (display && win)
@@ -380,7 +382,7 @@ namespace DotBlue
         PFNGLXCREATECONTEXTATTRIBSARBPROC glXCreateContextAttribsARB = 
             (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddress((const GLubyte*)"glXCreateContextAttribsARB");
 
-        GLXContext modernCtx = nullptr;
+        modernCtx = nullptr;
         if (glXCreateContextAttribsARB)
         {
             int majorVersions[] = {4, 3, 3};
@@ -433,10 +435,10 @@ namespace DotBlue
             FD_ZERO(&fds);
             FD_SET(x11_fd, &fds);
             
-            // Set timeout to 16ms (60 FPS)
+            // Set timeout with some variation for more natural timing
             struct timeval timeout;
             timeout.tv_sec = 0;
-            timeout.tv_usec = 16667; // 16.67ms = 60 FPS
+            timeout.tv_usec = 20000; // 20ms = ~50 FPS base, allowing for natural variation
             
             int result = select(x11_fd + 1, &fds, nullptr, nullptr, &timeout);
             
@@ -452,7 +454,49 @@ namespace DotBlue
                         running = false;
                         break;
                     }
-                    // Handle other events (keyboard, mouse, etc.)
+                    
+                    // Forward events to ImGui
+                    ImGuiIO &io = ImGui::GetIO();
+                    if (xev.type == MotionNotify)
+                    {
+                        io.MousePos = ImVec2((float)xev.xmotion.x, (float)xev.xmotion.y);
+                    }
+                    else if (xev.type == ButtonPress)
+                    {
+                        if (xev.xbutton.button == Button1) io.MouseDown[0] = true; // Left
+                        if (xev.xbutton.button == Button3) io.MouseDown[1] = true; // Right
+                    }
+                    else if (xev.type == ButtonRelease)
+                    {
+                        if (xev.xbutton.button == Button1) io.MouseDown[0] = false;
+                        if (xev.xbutton.button == Button3) io.MouseDown[1] = false;
+                    }
+                    else if (xev.type == KeyPress)
+                    {
+                        KeySym keysym = XLookupKeysym(&xev.xkey, 0);
+                        if (keysym == XK_Left)   io.AddKeyEvent(ImGuiKey_LeftArrow, true);
+                        if (keysym == XK_Right)  io.AddKeyEvent(ImGuiKey_RightArrow, true);
+                        if (keysym == XK_Up)     io.AddKeyEvent(ImGuiKey_UpArrow, true);
+                        if (keysym == XK_Down)   io.AddKeyEvent(ImGuiKey_DownArrow, true);
+                        if (keysym == XK_Control_L || keysym == XK_Control_R) io.AddKeyEvent(ImGuiKey_LeftCtrl, true);
+                    }
+                    else if (xev.type == KeyRelease)
+                    {
+                        KeySym keysym = XLookupKeysym(&xev.xkey, 0);
+                        if (keysym == XK_Left)   io.AddKeyEvent(ImGuiKey_LeftArrow, false);
+                        if (keysym == XK_Right)  io.AddKeyEvent(ImGuiKey_RightArrow, false);
+                        if (keysym == XK_Up)     io.AddKeyEvent(ImGuiKey_UpArrow, false);
+                        if (keysym == XK_Down)   io.AddKeyEvent(ImGuiKey_DownArrow, false);
+                        if (keysym == XK_Control_L || keysym == XK_Control_R) io.AddKeyEvent(ImGuiKey_LeftCtrl, false);
+                    }
+                    else if (xev.type == FocusIn)
+                    {
+                        io.AddFocusEvent(true);
+                    }
+                    else if (xev.type == FocusOut)
+                    {
+                        io.AddFocusEvent(false);
+                    }
                 }
             }
             
@@ -462,12 +506,20 @@ namespace DotBlue
             // Always render, regardless of whether events occurred
             PerformRender();
 
-            // Frame timing
+            // Frame timing - allow natural variation like Windows
             auto frameEnd = std::chrono::high_resolution_clock::now();
             double elapsed = std::chrono::duration<double, std::milli>(frameEnd - frameStart).count();
-            if (elapsed < targetFrameTime)
+            
+            // Only sleep if we're running significantly faster than target (give some headroom)
+            double minFrameTime = targetFrameTime * 0.8; // Allow some natural variation
+            if (elapsed < minFrameTime)
             {
-                std::this_thread::sleep_for(std::chrono::milliseconds((int)(targetFrameTime - elapsed)));
+                // Use a shorter sleep to allow more natural frame rate fluctuation
+                int sleepTime = (int)((minFrameTime - elapsed) * 0.7); // Less aggressive sleep
+                if (sleepTime > 0)
+                {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
+                }
             }
         }
 
