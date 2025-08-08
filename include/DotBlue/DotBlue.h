@@ -18,15 +18,32 @@
 
 #include "GLPlatform.h"
 #include "Input.h"
+#include <functional>
 
 namespace DotBlue
 {
-
+    // Game callback types
+    typedef std::function<bool()> GameInitCallback;
+    typedef std::function<void(float)> GameUpdateCallback;
+    typedef std::function<void()> GameRenderCallback;
+    typedef std::function<void()> GameShutdownCallback;
+    typedef std::function<void(const InputManager&, const InputBindings&)> GameInputCallback;
 
     DOTBLUE_API void Hello();
     DOTBLUE_API int DB_Test();
     DOTBLUE_API int Console_Test();
     DOTBLUE_API int GL_Test();
+    
+    // Game callback system
+    DOTBLUE_API void SetGameCallbacks(
+        GameInitCallback initCallback,
+        GameUpdateCallback updateCallback, 
+        GameRenderCallback renderCallback,
+        GameShutdownCallback shutdownCallback,
+        GameInputCallback inputCallback
+    );
+    
+    DOTBLUE_API int RunGame(std::atomic<bool>& running);
     
     // Test functions
     DOTBLUE_API void TestInputSystem();

@@ -1,10 +1,9 @@
 #include "GameBase.h"
+#include <DotBlue/Input.h>
 
 GameBase::GameBase() 
     : m_running(false)
     , m_deltaTime(0.0f)
-    , m_inputManager(nullptr)
-    , m_inputBindings(nullptr)
 {
 }
 
@@ -20,9 +19,7 @@ int GameBase::Run()
         [this](float dt) { this->m_deltaTime = dt; this->Update(dt); },
         [this]() { this->Render(); },
         [this]() { this->Shutdown(); },
-        [this](const InputManager& input, const InputBindings& bindings) { 
-            this->m_inputManager = const_cast<InputManager*>(&input);
-            this->m_inputBindings = const_cast<InputBindings*>(&bindings);
+        [this](const DotBlue::InputManager& input, const DotBlue::InputBindings& bindings) { 
             this->HandleInput(input, bindings); 
         }
     );

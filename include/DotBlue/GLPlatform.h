@@ -155,5 +155,16 @@ namespace DotBlue
         float radians(float degrees);
         float degrees(float radians);
     }
+    
+    // Forward declarations
+    class InputManager;
+    class InputBindings;
+    
+    // Game callback access (for internal use)
+    bool CallGameInit();
+    void CallGameUpdate(float deltaTime);
+    void CallGameRender();
+    void CallGameShutdown();
+    void CallGameInput(const InputManager& input, const InputBindings& bindings);
 
 } // namespace DotBlue

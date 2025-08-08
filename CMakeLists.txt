@@ -7,7 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Build options
 option(BUILD_STATIC_LIB "Build DotBlue as a static library" OFF)
-option(BUILD_TESTS "Build test executable" ON)
 
 # Determine lib type
 if(BUILD_STATIC_LIB)
@@ -64,37 +63,6 @@ target_include_directories(DotBlue PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-
-if(BUILD_TESTS)
-    add_executable(DotBlueTest test/main.cpp)
-    target_include_directories(DotBlueTest PRIVATE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    )
-    if(MSVC)
-        target_link_libraries(DotBlueTest PRIVATE DotBlue "C:/Users/daver/LocalApps/glew-2.1.0/lib/Release/x64/glew32.lib")
-        target_compile_definitions(DotBlue PRIVATE _CRT_SECURE_NO_WARNINGS)
-    elseif(UNIX AND NOT APPLE)
-        target_link_libraries(DotBlueTest PRIVATE
-            DotBlue
-            GL
-            GLEW
-            X11
-            SDL2
-            SDL2_mixer
-            pthread
-            dl)
-        target_link_libraries(DotBlue PRIVATE
-            GL
-            GLEW
-            X11
-            SDL2
-            SDL2_mixer
-            pthread
-            dl)
-    endif()
-endif()
-
-
 # Use absolute path for glew32.lib
 if(MSVC)
     # Set GLEW root directory
@@ -113,19 +81,12 @@ if(MSVC)
     set(SDL2_MIXER_ROOT "C:/Users/daver/LocalApps/SDL2_mixer-2.8.1")
     include_directories(${SDL2_MIXER_ROOT}/include)
     target_link_libraries(DotBlue PRIVATE "${SDL2_MIXER_ROOT}/lib/x64/SDL2_mixer.lib")
-    target_link_libraries(DotBlueTest PRIVATE DotBlue "${SDL2_MIXER_ROOT}/lib/x64/SDL2_mixer.lib")
     
     set(SDL2_ROOT "C:/Users/daver/LocalApps/SDL2-2.32.6")
     include_directories(${SDL2_ROOT}/include)
     target_link_libraries(DotBlue PRIVATE "${SDL2_ROOT}/lib/x64/SDL2.lib")
-    target_link_libraries(DotBlueTest PRIVATE DotBlue "${SDL2_ROOT}/lib/x64/SDL2.lib" "${SDL2_ROOT}/lib/x64/SDL2main.lib")
     
     include_directories("C:/Users/daver/source/dotblue/src")
-    
-    # Add GLM to test target (Windows only)
-    if(BUILD_TESTS)
-        target_include_directories(DotBlueTest PRIVATE "${GLM_ROOT}")
-    endif()
     
 elseif(UNIX AND NOT APPLE)
     # On Linux, GLM is typically installed via package manager
@@ -137,9 +98,6 @@ elseif(UNIX AND NOT APPLE)
     if(GLM_INCLUDE_DIR)
         message(STATUS "Found GLM: ${GLM_INCLUDE_DIR}")
         target_include_directories(DotBlue PUBLIC ${GLM_INCLUDE_DIR})
-        if(BUILD_TESTS)
-            target_include_directories(DotBlueTest PRIVATE ${GLM_INCLUDE_DIR})
-        endif()
     else()
         message(WARNING "GLM not found. Install with: sudo apt-get install libglm-dev")
     endif()
