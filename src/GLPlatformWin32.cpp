@@ -42,6 +42,16 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     switch (uMsg)
     {
+    case WM_ENTERSIZEMOVE:
+        g_inSizeMove = true;
+        // Start timer to continue rendering during window move/resize
+        SetTimer(hwnd, 1, 16, GlobalTimerRenderProc); // ~60 FPS
+        return 0;
+    case WM_EXITSIZEMOVE:
+        g_inSizeMove = false;
+        // Stop the timer
+        KillTimer(hwnd, 1);
+        return 0;
     case WM_CLOSE:
     case WM_DESTROY:
         PostQuitMessage(0);

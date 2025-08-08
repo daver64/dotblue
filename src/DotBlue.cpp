@@ -35,8 +35,12 @@ int DB_Test()
 
     void* ptr = allocator.allocate();
     if (ptr) {
-        strncpy((char*)ptr, "Hello, mapped memory!", 63); // Use strncpy for cross-platform compatibility
+#ifdef _WIN32
+        strncpy_s((char*)ptr, 64, "Hello, mapped memory!", 63); // Use secure version on Windows
+#elif defined(__linux__) || defined(__FreeBSD__)
+        strncpy((char*)ptr, "Hello, mapped memory!", 63); // Use strncpy for Linux/FreeBSD compatibility
         ((char*)ptr)[63] = '\0'; // Ensure null termination
+#endif
         std::cout << (char*)ptr << "\n";
         allocator.free(ptr);
     }
