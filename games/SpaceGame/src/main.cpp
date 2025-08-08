@@ -22,6 +22,8 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 #elif defined(__linux__) || defined(__FreeBSD__)
 #include <GL/glew.h>
 #include <GL/gl.h>
+#include <X11/Xlib.h>
+#include <X11/keysym.h>
 #endif
 
 #include <iostream>
@@ -30,6 +32,9 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 #ifdef _WIN32
 // Forward declaration of window message handler
 static long HandleWindowMessage(void* hwnd, unsigned int msg, unsigned long long wParam, long long lParam);
+#elif defined(__linux__) || defined(__FreeBSD__)
+// Forward declaration of X11 event handler
+static void HandleX11Event(void* xevent);
 #endif
 
 class SpaceGame : public GameBase
@@ -50,9 +55,12 @@ public:
 #ifdef _WIN32
         // Set up window message callback for ImGui input handling
         DotBlue::SetWindowMessageCallback(HandleWindowMessage);
+#elif defined(__linux__) || defined(__FreeBSD__)
+        // Set up X11 event callback for ImGui input handling
+        DotBlue::SetX11EventCallback(HandleX11Event);
 #endif
         
-        // Initialize ImGui
+        // Initialize ImGui - it's our responsibility since DotBlue no longer does it
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -194,7 +202,7 @@ public:
     {
         std::cout << "Shutting down Space Game..." << std::endl;
         
-        // Cleanup ImGui
+        // Cleanup ImGui since we initialized it
         ImGui_ImplOpenGL3_Shutdown();
 #ifdef _WIN32
         ImGui_ImplWin32_Shutdown();
@@ -218,6 +226,83 @@ static long HandleWindowMessage(void* hwnd, unsigned int msg, unsigned long long
     
     // Return the result directly as a long
     return static_cast<long>(result);
+}
+#elif defined(__linux__) || defined(__FreeBSD__)
+// X11 event handler for ImGui input
+static void HandleX11Event(void* xevent)
+{
+    XEvent* xev = static_cast<XEvent*>(xevent);
+    ImGuiIO& io = ImGui::GetIO();
+    
+    switch (xev->type)
+    {
+        case MotionNotify:
+            io.MousePos = ImVec2((float)xev->xmotion.x, (float)xev->xmotion.y);
+            break;
+            
+        case ButtonPress:
+            if (xev->xbutton.button == Button1) io.MouseDown[0] = true;  // Left mouse
+            if (xev->xbutton.button == Button3) io.MouseDown[1] = true;  // Right mouse
+            if (xev->xbutton.button == Button2) io.MouseDown[2] = true;  // Middle mouse
+            break;
+            
+        case ButtonRelease:
+            if (xev->xbutton.button == Button1) io.MouseDown[0] = false;
+            if (xev->xbutton.button == Button3) io.MouseDown[1] = false;
+            if (xev->xbutton.button == Button2) io.MouseDown[2] = false;
+            break;
+            
+        case KeyPress:
+        {
+            KeySym keysym = XLookupKeysym(&xev->xkey, 0);
+            if (keysym == XK_Left)   io.AddKeyEvent(ImGuiKey_LeftArrow, true);
+            if (keysym == XK_Right)  io.AddKeyEvent(ImGuiKey_RightArrow, true);
+            if (keysym == XK_Up)     io.AddKeyEvent(ImGuiKey_UpArrow, true);
+            if (keysym == XK_Down)   io.AddKeyEvent(ImGuiKey_DownArrow, true);
+            if (keysym == XK_Control_L || keysym == XK_Control_R) io.AddKeyEvent(ImGuiKey_LeftCtrl, true);
+            if (keysym == XK_Shift_L || keysym == XK_Shift_R) io.AddKeyEvent(ImGuiKey_LeftShift, true);
+            if (keysym == XK_Alt_L || keysym == XK_Alt_R) io.AddKeyEvent(ImGuiKey_LeftAlt, true);
+            if (keysym == XK_Return) io.AddKeyEvent(ImGuiKey_Enter, true);
+            if (keysym == XK_Escape) io.AddKeyEvent(ImGuiKey_Escape, true);
+            if (keysym == XK_Delete) io.AddKeyEvent(ImGuiKey_Delete, true);
+            if (keysym == XK_BackSpace) io.AddKeyEvent(ImGuiKey_Backspace, true);
+            if (keysym == XK_Tab) io.AddKeyEvent(ImGuiKey_Tab, true);
+            if (keysym == XK_space) io.AddKeyEvent(ImGuiKey_Space, true);
+            
+            // Handle character input
+            if (keysym >= 32 && keysym <= 126) {
+                io.AddInputCharacter((unsigned int)keysym);
+            }
+            break;
+        }
+        
+        case KeyRelease:
+        {
+            KeySym keysym = XLookupKeysym(&xev->xkey, 0);
+            if (keysym == XK_Left)   io.AddKeyEvent(ImGuiKey_LeftArrow, false);
+            if (keysym == XK_Right)  io.AddKeyEvent(ImGuiKey_RightArrow, false);
+            if (keysym == XK_Up)     io.AddKeyEvent(ImGuiKey_UpArrow, false);
+            if (keysym == XK_Down)   io.AddKeyEvent(ImGuiKey_DownArrow, false);
+            if (keysym == XK_Control_L || keysym == XK_Control_R) io.AddKeyEvent(ImGuiKey_LeftCtrl, false);
+            if (keysym == XK_Shift_L || keysym == XK_Shift_R) io.AddKeyEvent(ImGuiKey_LeftShift, false);
+            if (keysym == XK_Alt_L || keysym == XK_Alt_R) io.AddKeyEvent(ImGuiKey_LeftAlt, false);
+            if (keysym == XK_Return) io.AddKeyEvent(ImGuiKey_Enter, false);
+            if (keysym == XK_Escape) io.AddKeyEvent(ImGuiKey_Escape, false);
+            if (keysym == XK_Delete) io.AddKeyEvent(ImGuiKey_Delete, false);
+            if (keysym == XK_BackSpace) io.AddKeyEvent(ImGuiKey_Backspace, false);
+            if (keysym == XK_Tab) io.AddKeyEvent(ImGuiKey_Tab, false);
+            if (keysym == XK_space) io.AddKeyEvent(ImGuiKey_Space, false);
+            break;
+        }
+        
+        case FocusIn:
+            io.AddFocusEvent(true);
+            break;
+            
+        case FocusOut:
+            io.AddFocusEvent(false);
+            break;
+    }
 }
 #endif
 

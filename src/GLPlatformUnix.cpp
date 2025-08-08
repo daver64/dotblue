@@ -16,16 +16,21 @@
 #include <DotBlue/GLPlatform.h>
 #include <DotBlue/SmoothRenderer.h>
 #include <DotBlue/Input.h>
-#include "imgui.h"
-#include "backends/imgui_impl_opengl3.h"
 
 // Global X11 variables (accessible by ThreadedRenderer.cpp)
 Display *display = nullptr;
 Window win = 0;
 GLXContext modernCtx = nullptr;
 
+// X11 event callback for client applications (like ImGui)
+static DotBlue::X11EventCallback g_x11EventCallback = nullptr;
+
 namespace DotBlue
 {
+    void SetX11EventCallback(X11EventCallback callback)
+    {
+        g_x11EventCallback = callback;
+    }
     void GLSwapBuffers()
     {
         glXSwapBuffers(display, win);
@@ -150,8 +155,6 @@ namespace DotBlue
                 }
             }
         }
-        ImGui::CreateContext();
-        ImGui_ImplOpenGL3_Init("#version 400");
         
         // Initialize GLEW after OpenGL context is created and current
         if (glewInit() != GLEW_OK)
@@ -171,61 +174,22 @@ namespace DotBlue
         {
             auto frameStart = std::chrono::high_resolution_clock::now();
 
-            ImGuiIO &io = ImGui::GetIO();
-            // Optionally, initialize mouse state to false at the start of each frame
-          //  io.MouseDown[0] = false;
-           // io.MouseDown[1] = false;
-
             while (XPending(display))
             {
                 XEvent xev;
                 XNextEvent(display, &xev);
+                
+                // Forward event to client application (for ImGui, etc.)
+                if (g_x11EventCallback)
+                {
+                    g_x11EventCallback(&xev);
+                }
+                
                 if (xev.type == ClientMessage || xev.type == DestroyNotify)
                 {
                     running = false;
                 }
-                else if (xev.type == MotionNotify)
-                {
-                    io.MousePos = ImVec2((float)xev.xmotion.x, (float)xev.xmotion.y);
-                }
-                else if (xev.type == ButtonPress)
-                {
-                    if (xev.xbutton.button == Button1) io.MouseDown[0] = true; // Left
-                    if (xev.xbutton.button == Button3) io.MouseDown[1] = true; // Right
-                }
-                else if (xev.type == ButtonRelease)
-                {
-                    if (xev.xbutton.button == Button1) io.MouseDown[0] = false;
-                    if (xev.xbutton.button == Button3) io.MouseDown[1] = false;
-                }
-                else if (xev.type == KeyPress)
-                {
-                    KeySym keysym = XLookupKeysym(&xev.xkey, 0);
-                    if (keysym == XK_Left)   io.AddKeyEvent(ImGuiKey_LeftArrow, true);   // or false for release
-                    if (keysym == XK_Right)  io.AddKeyEvent(ImGuiKey_RightArrow, true);
-                    if (keysym == XK_Up)     io.AddKeyEvent(ImGuiKey_UpArrow, true);
-                    if (keysym == XK_Down)   io.AddKeyEvent(ImGuiKey_DownArrow, true);
-                    if (keysym == XK_Control_L || keysym == XK_Control_R) io.AddKeyEvent(ImGuiKey_LeftCtrl, true);
-                    // ...add more keys as needed...
-                }
-                else if (xev.type == KeyRelease)
-                {
-                    KeySym keysym = XLookupKeysym(&xev.xkey, 0);
-                    if (keysym == XK_Left)   io.AddKeyEvent(ImGuiKey_LeftArrow, false);
-                    if (keysym == XK_Right)  io.AddKeyEvent(ImGuiKey_RightArrow, false);
-                    if (keysym == XK_Up)     io.AddKeyEvent(ImGuiKey_UpArrow, false);
-                    if (keysym == XK_Down)   io.AddKeyEvent(ImGuiKey_DownArrow, false);
-                    if (keysym == XK_Control_L || keysym == XK_Control_R) io.AddKeyEvent(ImGuiKey_LeftCtrl, false);
-                    // ...add more keys as needed...
-                }
-                else if (xev.type == FocusIn)
-                {
-                    io.AddFocusEvent(true);
-                }
-                else if (xev.type == FocusOut)
-                {
-                    io.AddFocusEvent(false);
-                }
+                // Basic event handling - client applications can extend this
             }
             //DotBlue::HandleInput(win);
             DotBlue::UpdateAndRender();
@@ -298,24 +262,6 @@ namespace DotBlue
 
         // Call game rendering
         DotBlue::CallGameRender();
-
-        // ImGui rendering
-        ImGuiIO &io = ImGui::GetIO();
-        io.DisplaySize.x = static_cast<float>(width);
-        io.DisplaySize.y = static_cast<float>(height);
-
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui::NewFrame();
-
-        // Default ImGui demo
-        ImGui::Begin("DotBlue Engine (Timer-based Linux)");
-        ImGui::Text("Welcome to DotBlue!");
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 
-                   1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        ImGui::End();
-
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         // Swap buffers
         glXSwapBuffers(display, win);
@@ -408,9 +354,6 @@ namespace DotBlue
             }
         }
 
-        ImGui::CreateContext();
-        ImGui_ImplOpenGL3_Init("#version 400");
-        
         if (glewInit() != GLEW_OK)
         {
             std::cerr << "Failed to initialize GLEW!" << std::endl;
@@ -449,54 +392,20 @@ namespace DotBlue
                 {
                     XEvent xev;
                     XNextEvent(display, &xev);
+                    
+                    // Forward event to client application (for ImGui, etc.)
+                    if (g_x11EventCallback)
+                    {
+                        g_x11EventCallback(&xev);
+                    }
+                    
                     if (xev.type == ClientMessage || xev.type == DestroyNotify)
                     {
                         running = false;
                         break;
                     }
                     
-                    // Forward events to ImGui
-                    ImGuiIO &io = ImGui::GetIO();
-                    if (xev.type == MotionNotify)
-                    {
-                        io.MousePos = ImVec2((float)xev.xmotion.x, (float)xev.xmotion.y);
-                    }
-                    else if (xev.type == ButtonPress)
-                    {
-                        if (xev.xbutton.button == Button1) io.MouseDown[0] = true; // Left
-                        if (xev.xbutton.button == Button3) io.MouseDown[1] = true; // Right
-                    }
-                    else if (xev.type == ButtonRelease)
-                    {
-                        if (xev.xbutton.button == Button1) io.MouseDown[0] = false;
-                        if (xev.xbutton.button == Button3) io.MouseDown[1] = false;
-                    }
-                    else if (xev.type == KeyPress)
-                    {
-                        KeySym keysym = XLookupKeysym(&xev.xkey, 0);
-                        if (keysym == XK_Left)   io.AddKeyEvent(ImGuiKey_LeftArrow, true);
-                        if (keysym == XK_Right)  io.AddKeyEvent(ImGuiKey_RightArrow, true);
-                        if (keysym == XK_Up)     io.AddKeyEvent(ImGuiKey_UpArrow, true);
-                        if (keysym == XK_Down)   io.AddKeyEvent(ImGuiKey_DownArrow, true);
-                        if (keysym == XK_Control_L || keysym == XK_Control_R) io.AddKeyEvent(ImGuiKey_LeftCtrl, true);
-                    }
-                    else if (xev.type == KeyRelease)
-                    {
-                        KeySym keysym = XLookupKeysym(&xev.xkey, 0);
-                        if (keysym == XK_Left)   io.AddKeyEvent(ImGuiKey_LeftArrow, false);
-                        if (keysym == XK_Right)  io.AddKeyEvent(ImGuiKey_RightArrow, false);
-                        if (keysym == XK_Up)     io.AddKeyEvent(ImGuiKey_UpArrow, false);
-                        if (keysym == XK_Down)   io.AddKeyEvent(ImGuiKey_DownArrow, false);
-                        if (keysym == XK_Control_L || keysym == XK_Control_R) io.AddKeyEvent(ImGuiKey_LeftCtrl, false);
-                    }
-                    else if (xev.type == FocusIn)
-                    {
-                        io.AddFocusEvent(true);
-                    }
-                    else if (xev.type == FocusOut)
-                    {
-                        io.AddFocusEvent(false);
-                    }
+                    // Basic event handling - client applications can extend this
                 }
             }
             

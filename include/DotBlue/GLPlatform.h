@@ -193,4 +193,10 @@ namespace DotBlue
     DOTBLUE_API void* GetWindowHandle();
 #endif
 
+    // X11 event callback system (for Linux games that need to handle X11 events like ImGui)
+#if defined(__linux__) || defined(__FreeBSD__)
+    typedef void (*X11EventCallback)(void* xevent);
+    DOTBLUE_API void SetX11EventCallback(X11EventCallback callback);
+#endif
+
 } // namespace DotBlue
