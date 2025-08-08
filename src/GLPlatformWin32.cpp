@@ -45,48 +45,24 @@ static UINT_PTR g_moveTimer = 0;
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    if (ImGui_ImplWin32_WndProcHandler(hwnd, uMsg, wParam, lParam))
-        return true; // ImGui handled the message
+    if (ImGui_ImplWin32_WndProcHandler(hwnd, uMsg, wParam, lParam)) {
+        return 0; // ImGui handled the message
+    }
 
     switch (uMsg)
     {
-    case WM_ENTERSIZEMOVE:
-        g_inSizeMove = true;
-        std::cout << "Entering size/move mode - starting thread backup" << std::endl;
-        // Start backup render thread
-        if (!g_backupThreadRunning.load()) {
-            g_useThreadBackup = true;
-            g_backupRenderThread = std::thread(BackupRenderLoop);
-        }
-        return 0;
-    case WM_EXITSIZEMOVE:
-        g_inSizeMove = false;
-        std::cout << "Exiting size/move mode - stopping thread backup" << std::endl;
-        // Stop backup render thread
-        if (g_backupThreadRunning.load()) {
-            g_useThreadBackup = false;
-            if (g_backupRenderThread.joinable()) {
-                g_backupRenderThread.join();
-            }
-        }
-        return 0;
     case WM_CLOSE:
     case WM_DESTROY:
         PostQuitMessage(0);
         return 0;
+    default:
+        return DefWindowProc(hwnd, uMsg, wParam, lParam);
     }
-    return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
 // Global timer callback wrapper
 void CALLBACK GlobalTimerRenderProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
 {
-    static int frameCount = 0;
-    frameCount++;
-    if (frameCount % 60 == 0) { // Print every 60 frames (once per second at 60 FPS)
-        std::cout << "Timer backup rendering active (frame " << frameCount << ")" << std::endl;
-    }
-    
     // Make the context current
     wglMakeCurrent(hdc, modernContext);
     
@@ -151,77 +127,82 @@ void BackupRenderLoop()
 {
     g_backupThreadRunning = true;
     
+    // Create context once for this thread
+    HGLRC backupContext = wglCreateContext(hdc);
+    if (!backupContext) {
+        g_backupThreadRunning = false;
+        return;
+    }
+    
     while (g_useThreadBackup.load()) {
         if (g_inSizeMove) {
-            // Create a separate OpenGL context for this thread
-            HGLRC backupContext = wglCreateContext(hdc);
-            if (backupContext) {
-                wglMakeCurrent(hdc, backupContext);
-                
-                // Calculate delta time
-                static auto lastTime = std::chrono::high_resolution_clock::now();
-                auto currentTime = std::chrono::high_resolution_clock::now();
-                float deltaTime = std::chrono::duration<float>(currentTime - lastTime).count();
-                lastTime = currentTime;
+            wglMakeCurrent(hdc, backupContext);
+            
+            // Calculate delta time
+            static auto lastTime = std::chrono::high_resolution_clock::now();
+            auto currentTime = std::chrono::high_resolution_clock::now();
+            float deltaTime = std::chrono::duration<float>(currentTime - lastTime).count();
+            lastTime = currentTime;
 
-                // Update input system
-                DotBlue::UpdateInput();
-                DotBlue::InputManager& input = DotBlue::GetInputManager();
-                DotBlue::InputBindings& bindings = DotBlue::GetInputBindings();
+            // Update input system
+            DotBlue::UpdateInput();
+            DotBlue::InputManager& input = DotBlue::GetInputManager();
+            DotBlue::InputBindings& bindings = DotBlue::GetInputBindings();
 
-                // Call game input and update
-                DotBlue::CallGameInput(input, bindings);
-                DotBlue::CallGameUpdate(deltaTime);
+            // Call game input and update
+            DotBlue::CallGameInput(input, bindings);
+            DotBlue::CallGameUpdate(deltaTime);
 
-                // Set up viewport
-                RECT rect;
-                GetClientRect(hwnd, &rect);
-                int width = rect.right - rect.left;
-                int height = rect.bottom - rect.top;
-                glViewport(0, 0, width, height);
+            // Set up viewport
+            RECT rect;
+            GetClientRect(hwnd, &rect);
+            int width = rect.right - rect.left;
+            int height = rect.bottom - rect.top;
+            glViewport(0, 0, width, height);
 
-                // Default clear color
-                glClearColor(0.2f, 0.3f, 0.4f, 1.0f);
-                glClear(GL_COLOR_BUFFER_BIT);
+            // Default clear color
+            glClearColor(0.2f, 0.3f, 0.4f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
 
-                glEnable(GL_BLEND);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-                // Call game rendering
-                DotBlue::CallGameRender();
+            // Call game rendering
+            DotBlue::CallGameRender();
 
-                // ImGui rendering
-                ImGuiIO &io = ImGui::GetIO();
-                io.DisplaySize.x = static_cast<float>(width);
-                io.DisplaySize.y = static_cast<float>(height);
+            // ImGui rendering
+            ImGuiIO &io = ImGui::GetIO();
+            io.DisplaySize.x = static_cast<float>(width);
+            io.DisplaySize.y = static_cast<float>(height);
 
-                ImGui_ImplWin32_NewFrame();
-                ImGui_ImplOpenGL3_NewFrame();
-                ImGui::NewFrame();
+            ImGui_ImplWin32_NewFrame();
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui::NewFrame();
 
-                // Default ImGui demo
-                ImGui::Begin("DotBlue Engine (Thread Backup)");
-                ImGui::Text("Welcome to DotBlue!");
-                ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 
-                           1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-                ImGui::Text("Thread Backup Mode Active");
-                ImGui::End();
+            // Default ImGui demo
+            ImGui::Begin("DotBlue Engine (Thread Backup)");
+            ImGui::Text("Welcome to DotBlue!");
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 
+                       1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            ImGui::Text("Thread Backup Mode Active");
+            ImGui::End();
 
-                ImGui::Render();
-                ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+            ImGui::Render();
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-                // Swap buffers
-                SwapBuffers(hdc);
-                
-                wglMakeCurrent(nullptr, nullptr);
-                wglDeleteContext(backupContext);
-            }
+            // Swap buffers
+            SwapBuffers(hdc);
+            
+            wglMakeCurrent(nullptr, nullptr);
         }
         
         // Target 60 FPS
         std::this_thread::sleep_for(std::chrono::milliseconds(16));
     }
     
+    // Clean up context
+    wglMakeCurrent(nullptr, nullptr);
+    wglDeleteContext(backupContext);
     g_backupThreadRunning = false;
 }
 
@@ -496,8 +477,6 @@ namespace DotBlue
         ImGui_ImplOpenGL3_Init("#version 400");
         DotBlue::InitApp();
 
-        std::cout << "Starting high-precision rendering loop..." << std::endl;
-
         // High-precision timing setup
         LARGE_INTEGER frequency, lastTime, currentTime;
         QueryPerformanceFrequency(&frequency);
@@ -601,8 +580,6 @@ namespace DotBlue
                 Sleep(1);
             }
         }
-
-        std::cout << "Stopping high-precision renderer..." << std::endl;
 
         DotBlue::ShutdownApp();
         wglMakeCurrent(nullptr, nullptr);
