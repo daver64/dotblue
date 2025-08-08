@@ -27,26 +27,34 @@ set(GAME_SOURCES
     src/GameBase.cpp
 )
 
-# ImGui source files (using local copy for consistency across platforms)
-set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../imgui)
+# Set ImGui path
+set(IMGUI_DIR "C:/Users/daver/LocalApps/imgui" CACHE PATH "Path to ImGui")
+
+# ImGui source files
 set(IMGUI_SOURCES
     ${IMGUI_DIR}/imgui.cpp
-    ${IMGUI_DIR}/imgui_demo.cpp
     ${IMGUI_DIR}/imgui_draw.cpp
     ${IMGUI_DIR}/imgui_tables.cpp
     ${IMGUI_DIR}/imgui_widgets.cpp
+    ${IMGUI_DIR}/imgui_demo.cpp
     ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
 )
+
+# Add platform-specific ImGui backend
+if(WIN32)
+    list(APPEND IMGUI_SOURCES ${IMGUI_DIR}/backends/imgui_impl_win32.cpp)
+elseif(UNIX AND NOT APPLE)
+    list(APPEND IMGUI_SOURCES ${IMGUI_DIR}/backends/imgui_impl_sdl2.cpp)
+endif()
 
 # Create executable
 add_executable(SpaceGame ${GAME_SOURCES} ${IMGUI_SOURCES})
 
-# Include directories
-target_include_directories(SpaceGame PRIVATE 
-    ${IMGUI_DIR}
-    ${IMGUI_DIR}/backends
-    ${DOTBLUE_DIR}/include
-)
+# Include DotBlue headers
+target_include_directories(SpaceGame PRIVATE ${DOTBLUE_DIR}/include)
+
+# Include ImGui headers
+target_include_directories(SpaceGame PRIVATE ${IMGUI_DIR})
 
 # Include GLM headers (Windows only)
 if(WIN32)
