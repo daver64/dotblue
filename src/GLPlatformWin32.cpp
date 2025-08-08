@@ -344,6 +344,8 @@ namespace DotBlue
         const double frameTime = 1.0 / targetFPS;
         double accumulator = 0.0;
 
+        std::cout << "Starting timer-based rendering loop (Windows)..." << std::endl;
+
         // Main game loop with high-precision timing
         while (running)
         {
@@ -411,6 +413,8 @@ namespace DotBlue
                 Sleep(1);
             }
         }
+
+        std::cout << "Stopping timer-based renderer (Windows)..." << std::endl;
 
         DotBlue::ShutdownApp();
         wglMakeCurrent(nullptr, nullptr);

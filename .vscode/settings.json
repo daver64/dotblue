@@ -3,5 +3,38 @@
         "xiosbase": "cpp",
         "vector": "cpp",
         "*.rh": "cpp"
-    }
+    },
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
+    "terminal.integrated.profiles.windows": {
+        "PowerShell": {
+            "source": "PowerShell",
+            "icon": "terminal-powershell"
+        }
+    },
+    "terminal.integrated.shellIntegration.enabled": true,
+    "terminal.integrated.shellIntegration.decorationsEnabled": "both",
+    "terminal.integrated.shellIntegration.history": 100,
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build DotBlue",
+            "type": "shell",
+            "command": "cmd",
+            "args": ["/c", "govc.bat && cd build && nmake"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Build SpaceGame",
+            "type": "shell", 
+            "command": "cmd",
+            "args": ["/c", "govc.bat && cd games\\SpaceGame\\build && nmake"],
+            "group": "build",
+            "dependsOn": "Build DotBlue"
+        }
+    ]
 }
