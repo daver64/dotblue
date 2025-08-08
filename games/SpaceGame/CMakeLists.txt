@@ -27,11 +27,31 @@ set(GAME_SOURCES
     src/GameBase.cpp
 )
 
+# ImGui source files
+set(IMGUI_SOURCES
+    ../../src/imgui.cpp
+    ../../src/imgui_draw.cpp
+    ../../src/imgui_tables.cpp
+    ../../src/imgui_widgets.cpp
+    ../../src/imgui_demo.cpp
+    ../../src/backends/imgui_impl_opengl3.cpp
+)
+
+# Add platform-specific ImGui backend
+if(WIN32)
+    list(APPEND IMGUI_SOURCES ../../src/backends/imgui_impl_win32.cpp)
+elseif(UNIX AND NOT APPLE)
+    list(APPEND IMGUI_SOURCES ../../src/backends/imgui_impl_sdl2.cpp)
+endif()
+
 # Create the game executable
-add_executable(SpaceGame ${GAME_SOURCES})
+add_executable(SpaceGame ${GAME_SOURCES} ${IMGUI_SOURCES})
 
 # Include DotBlue headers
 target_include_directories(SpaceGame PRIVATE ${DOTBLUE_DIR}/include)
+
+# Include ImGui headers
+target_include_directories(SpaceGame PRIVATE ${DOTBLUE_DIR}/src)
 
 # Include GLM headers (Windows only)
 if(WIN32)

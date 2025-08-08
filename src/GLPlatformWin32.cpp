@@ -7,46 +7,37 @@
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <DotBlue/wglext.h>
-#include <atomic>
 #include <iostream>
 #include <vector>
 #include <string>
 #include <chrono>
-#include <thread>
 
 #undef UNICODE
 #undef _UNICODE
-#include "imgui.h"
-#include "backends/imgui_impl_opengl3.h"
-#include "backends/imgui_impl_win32.h"
-#include <thread>
-#include <atomic>
 #pragma comment(lib, "opengl32.lib")
-extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 // External declarations for global OpenGL context
 extern HWND hwnd;
 extern HDC hdc;
 extern HGLRC modernContext;
 
-// Thread-based backup renderer for window moves
-std::atomic<bool> g_useThreadBackup{false};
-std::thread g_backupRenderThread;
-std::atomic<bool> g_backupThreadRunning{false};
-
-void BackupRenderLoop();
-
 // Global timer callback wrapper
 void CALLBACK GlobalTimerRenderProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime);
 
 // Global flag to track if we're in a size/move operation
 static bool g_inSizeMove = false;
-static UINT_PTR g_moveTimer = 0;
+
+// Window message callback for games (like ImGui)
+static DotBlue::WindowMessageCallback g_windowMessageCallback = nullptr;
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    if (ImGui_ImplWin32_WndProcHandler(hwnd, uMsg, wParam, lParam)) {
-        return 0; // ImGui handled the message
+    // Allow games to handle window messages first (e.g., for ImGui)
+    if (g_windowMessageCallback) {
+        LRESULT result = g_windowMessageCallback(hwnd, uMsg, wParam, lParam);
+        if (result != 0) {
+            return result; // Game handled the message
+        }
     }
 
     switch (uMsg)
@@ -98,112 +89,8 @@ void CALLBACK GlobalTimerRenderProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWOR
     // Call game rendering
     DotBlue::CallGameRender();
 
-    // ImGui rendering
-    ImGuiIO &io = ImGui::GetIO();
-    io.DisplaySize.x = static_cast<float>(width);
-    io.DisplaySize.y = static_cast<float>(height);
-
-    ImGui_ImplWin32_NewFrame();
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui::NewFrame();
-
-    // Default ImGui demo
-    ImGui::Begin("DotBlue Engine (Timer Backup)");
-    ImGui::Text("Welcome to DotBlue!");
-    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 
-               1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-    ImGui::Text("Window Move Mode Active");
-    ImGui::End();
-
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
     // Swap buffers
     SwapBuffers(hdc);
-}
-
-// Backup render thread that runs independently during window moves
-void BackupRenderLoop()
-{
-    g_backupThreadRunning = true;
-    
-    // Create context once for this thread
-    HGLRC backupContext = wglCreateContext(hdc);
-    if (!backupContext) {
-        g_backupThreadRunning = false;
-        return;
-    }
-    
-    while (g_useThreadBackup.load()) {
-        if (g_inSizeMove) {
-            wglMakeCurrent(hdc, backupContext);
-            
-            // Calculate delta time
-            static auto lastTime = std::chrono::high_resolution_clock::now();
-            auto currentTime = std::chrono::high_resolution_clock::now();
-            float deltaTime = std::chrono::duration<float>(currentTime - lastTime).count();
-            lastTime = currentTime;
-
-            // Update input system
-            DotBlue::UpdateInput();
-            DotBlue::InputManager& input = DotBlue::GetInputManager();
-            DotBlue::InputBindings& bindings = DotBlue::GetInputBindings();
-
-            // Call game input and update
-            DotBlue::CallGameInput(input, bindings);
-            DotBlue::CallGameUpdate(deltaTime);
-
-            // Set up viewport
-            RECT rect;
-            GetClientRect(hwnd, &rect);
-            int width = rect.right - rect.left;
-            int height = rect.bottom - rect.top;
-            glViewport(0, 0, width, height);
-
-            // Default clear color
-            glClearColor(0.2f, 0.3f, 0.4f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
-
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-            // Call game rendering
-            DotBlue::CallGameRender();
-
-            // ImGui rendering
-            ImGuiIO &io = ImGui::GetIO();
-            io.DisplaySize.x = static_cast<float>(width);
-            io.DisplaySize.y = static_cast<float>(height);
-
-            ImGui_ImplWin32_NewFrame();
-            ImGui_ImplOpenGL3_NewFrame();
-            ImGui::NewFrame();
-
-            // Default ImGui demo
-            ImGui::Begin("DotBlue Engine (Thread Backup)");
-            ImGui::Text("Welcome to DotBlue!");
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 
-                       1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-            ImGui::Text("Thread Backup Mode Active");
-            ImGui::End();
-
-            ImGui::Render();
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-            // Swap buffers
-            SwapBuffers(hdc);
-            
-            wglMakeCurrent(nullptr, nullptr);
-        }
-        
-        // Target 60 FPS
-        std::this_thread::sleep_for(std::chrono::milliseconds(16));
-    }
-    
-    // Clean up context
-    wglMakeCurrent(nullptr, nullptr);
-    wglDeleteContext(backupContext);
-    g_backupThreadRunning = false;
 }
 
 HWND hwnd;
@@ -288,9 +175,6 @@ namespace DotBlue
             std::cerr << "Failed to initialize GLEW!" << std::endl;
             exit(1);
         }
-        ImGui::CreateContext();
-        ImGui_ImplWin32_Init(hwnd); // hwnd is your window handle
-        ImGui_ImplOpenGL3_Init("#version 400");
         DotBlue::InitApp();
 
         // Manual frame timing setup
@@ -381,25 +265,6 @@ namespace DotBlue
         // Call game rendering
         DotBlue::CallGameRender();
 
-        // ImGui rendering
-        ImGuiIO &io = ImGui::GetIO();
-        io.DisplaySize.x = static_cast<float>(width);
-        io.DisplaySize.y = static_cast<float>(height);
-
-        ImGui_ImplWin32_NewFrame();
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui::NewFrame();
-
-        // Default ImGui demo
-        ImGui::Begin("DotBlue Engine (Timer-based)");
-        ImGui::Text("Welcome to DotBlue!");
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 
-                   1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        ImGui::End();
-
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
         // Swap buffers
         SwapBuffers(hdc);
     }
@@ -472,9 +337,6 @@ namespace DotBlue
             exit(1);
         }
 
-        ImGui::CreateContext();
-        ImGui_ImplWin32_Init(hwnd);
-        ImGui_ImplOpenGL3_Init("#version 400");
         DotBlue::InitApp();
 
         // High-precision timing setup
@@ -549,26 +411,6 @@ namespace DotBlue
                 // Call game rendering
                 DotBlue::CallGameRender();
 
-                // ImGui rendering
-                ImGuiIO &io = ImGui::GetIO();
-                io.DisplaySize.x = static_cast<float>(width);
-                io.DisplaySize.y = static_cast<float>(height);
-
-                ImGui_ImplWin32_NewFrame();
-                ImGui_ImplOpenGL3_NewFrame();
-                ImGui::NewFrame();
-
-                // Default ImGui demo with FPS display
-                ImGui::Begin("DotBlue Engine (High-Precision)");
-                ImGui::Text("Welcome to DotBlue!");
-                ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 
-                           1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-                ImGui::Text("Target: %.1f FPS", targetFPS);
-                ImGui::End();
-
-                ImGui::Render();
-                ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
                 // Swap buffers
                 SwapBuffers(hdc);
                 
@@ -589,6 +431,16 @@ namespace DotBlue
         }
         ReleaseDC(hwnd, hdc);
         DestroyWindow(hwnd);
+    }
+
+    void SetWindowMessageCallback(WindowMessageCallback callback)
+    {
+        g_windowMessageCallback = callback;
+    }
+
+    void* GetWindowHandle()
+    {
+        return static_cast<void*>(hwnd);
     }
 
 }

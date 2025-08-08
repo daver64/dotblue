@@ -185,5 +185,12 @@ namespace DotBlue
     void CallGameRender();
     void CallGameShutdown();
     void CallGameInput(const InputManager& input, const InputBindings& bindings);
+    
+    // Window message callback system (for games that need to handle window messages like ImGui)
+#ifdef _WIN32
+    typedef long (*WindowMessageCallback)(void* hwnd, unsigned int uMsg, unsigned long long wParam, long long lParam);
+    DOTBLUE_API void SetWindowMessageCallback(WindowMessageCallback callback);
+    DOTBLUE_API void* GetWindowHandle();
+#endif
 
 } // namespace DotBlue

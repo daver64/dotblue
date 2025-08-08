@@ -28,19 +28,7 @@ set(DOTBLUE_SOURCES
     src/GLPlatform.cpp
     src/GLPrintf.cpp
     src/SmoothRenderer.cpp
-    src/imgui.cpp
-    src/imgui_draw.cpp
-    src/imgui_tables.cpp
-    src/imgui_widgets.cpp
-    src/imgui_demo.cpp
-    src/backends/imgui_impl_opengl3.cpp
 )
-
-if(WIN32 OR CYGWIN)
-    list(APPEND DOTBLUE_SOURCES src/backends/imgui_impl_win32.cpp)
-elseif(UNIX AND NOT APPLE)
-    list(APPEND DOTBLUE_SOURCES src/backends/imgui_impl_sdl2.cpp)
-endif()
 
 add_library(DotBlue ${LIB_TYPE} ${DOTBLUE_SOURCES})
 

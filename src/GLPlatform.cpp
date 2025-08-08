@@ -23,14 +23,6 @@ const char *default_font_str = "C:/Windows/Fonts/consola.ttf";
 extern HDC glapp_hdc;
 #endif
 
-#include "imgui.h"
-#include "backends/imgui_impl_opengl3.h"
-#if defined(__linux__) || defined(__FreeBSD__)
-#include "backends/imgui_impl_sdl2.h"
-#elif defined(_WIN32) || defined(__CYGWIN__)
-#include "backends/imgui_impl_win32.h"
-#endif
-
 #include "DotBlue/Input.h"
 
 #include <chrono>
@@ -120,8 +112,6 @@ namespace DotBlue
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
-            ImGui_ImplSDL2_ProcessEvent(&event);
-
             // Handle input for our input system
             if (g_inputManager)
             {
@@ -177,36 +167,6 @@ namespace DotBlue
 
         // Call game rendering
         DotBlue::CallGameRender();
-
-        // ImGui rendering
-        ImGuiIO &io = ImGui::GetIO();
-#if defined(_WIN32)
-        RECT rect;
-        GetClientRect(hwnd, &rect);
-        io.DisplaySize.x = static_cast<float>(rect.right - rect.left);
-        io.DisplaySize.y = static_cast<float>(rect.bottom - rect.top);
-
-        ImGui_ImplWin32_NewFrame();
-        ImGui_ImplOpenGL3_NewFrame();
-#elif defined(__linux__) || defined(__FreeBSD__)
-        // Set display size using your window variables (replace width/height if needed)
-        io.DisplaySize.x = static_cast<float>(width);
-        io.DisplaySize.y = static_cast<float>(height);
-
-        ImGui_ImplOpenGL3_NewFrame();
-        // If you use SDL2 for windowing, you may want ImGui_ImplSDL2_NewFrame(window);
-#endif
-        ImGui::NewFrame();
-
-        // Default ImGui demo (games can disable this by not calling ImGui::Render())
-        ImGui::Begin("DotBlue Engine");
-        ImGui::Text("Welcome to DotBlue!");
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 
-                   1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        ImGui::End();
-
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         // Swap buffers (platform-specific)
         GLSwapBuffers();
