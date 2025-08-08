@@ -1,0 +1,35 @@
+# DotBlue CMake Config File
+# This file helps other projects find and use DotBlue
+
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/DotBlueTargets.cmake")
+
+# Set up imported targets
+if(NOT TARGET DotBlue::DotBlue)
+    add_library(DotBlue::DotBlue ALIAS DotBlue)
+endif()
+
+# Dependencies that games will need
+find_package(OpenGL REQUIRED)
+
+# Platform-specific dependencies
+if(WIN32)
+    # Windows-specific setup
+    set(DOTBLUE_GLEW_ROOT "C:/Users/daver/LocalApps/glew-2.1.0" CACHE PATH "Path to GLEW")
+    set(DOTBLUE_SDL2_ROOT "C:/Users/daver/LocalApps/SDL2-2.32.6" CACHE PATH "Path to SDL2")
+    set(DOTBLUE_SDL2_MIXER_ROOT "C:/Users/daver/LocalApps/SDL2_mixer-2.8.1" CACHE PATH "Path to SDL2_mixer")
+    set(DOTBLUE_GLM_ROOT "C:/Users/daver/LocalApps/glm-1.0.1" CACHE PATH "Path to GLM")
+elseif(UNIX AND NOT APPLE)
+    # Linux-specific setup
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(SDL2 REQUIRED sdl2)
+    pkg_check_modules(SDL2_MIXER REQUIRED SDL2_mixer)
+    find_package(GLEW REQUIRED)
+endif()
+
+# Provide helpful variables for games
+set(DOTBLUE_INCLUDE_DIRS "@CMAKE_INSTALL_PREFIX@/include")
+set(DOTBLUE_LIBRARIES DotBlue::DotBlue)
+
+check_required_components(DotBlue)
