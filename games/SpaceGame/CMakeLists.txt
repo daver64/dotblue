@@ -7,7 +7,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find DotBlue library
 # Use absolute path to DotBlue build directory
-set(DOTBLUE_DIR "C:/Users/daver/source/dotblue" CACHE PATH "Path to DotBlue source")
+if(WIN32)
+    set(DOTBLUE_DIR "C:/Users/daver/source/dotblue" CACHE PATH "Path to DotBlue source")
+else()
+    set(DOTBLUE_DIR "/home/dave/source/dotblue" CACHE PATH "Path to DotBlue source")
+endif()
 set(DOTBLUE_BUILD_DIR "${DOTBLUE_DIR}/build" CACHE PATH "Path to DotBlue build")
 
 # Set GLM path (Windows only)
@@ -37,9 +41,15 @@ if(WIN32)
 endif()
 
 # Link with DotBlue library directly
-target_link_libraries(SpaceGame PRIVATE 
-    ${DOTBLUE_BUILD_DIR}/DotBlue.lib
-)
+if(WIN32)
+    target_link_libraries(SpaceGame PRIVATE 
+        ${DOTBLUE_BUILD_DIR}/DotBlue.lib
+    )
+else()
+    target_link_libraries(SpaceGame PRIVATE 
+        ${DOTBLUE_BUILD_DIR}/libDotBlue.so
+    )
+endif()
 
 # Add SDL2 libraries on Windows
 if(WIN32)
@@ -47,10 +57,21 @@ if(WIN32)
         ${SDL2_ROOT}/lib/x64/SDL2.lib
         ${SDL2_ROOT}/lib/x64/SDL2main.lib
     )
+else()
+    # On Linux, link with system SDL2 libraries
+    target_link_libraries(SpaceGame PRIVATE 
+        SDL2
+        SDL2_mixer
+        GL
+        GLEW
+        X11
+    )
 endif()
 
-# Copy assets to build directory
-file(COPY assets/ DESTINATION ${CMAKE_BINARY_DIR}/assets/)
+# Copy assets to build directory (only if assets directory exists)
+if(EXISTS "${CMAKE_SOURCE_DIR}/assets")
+    file(COPY assets/ DESTINATION ${CMAKE_BINARY_DIR}/assets/)
+endif()
 
 # Platform-specific settings
 if(WIN32)
