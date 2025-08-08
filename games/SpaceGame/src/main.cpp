@@ -45,6 +45,7 @@ private:
     float rotation;
     DotBlue::GLShader colorShader;
     DotBlue::GLShader textureShader;
+    DotBlue::GLFont gameFont;
     bool showSpaceGameUI;
     
 public:
@@ -90,6 +91,14 @@ public:
             return false;
         }
         std::cout << "Texture shader loaded successfully" << std::endl;
+        
+        // Load font for GLPrintf
+#ifdef _WIN32
+        gameFont = DotBlue::LoadFont("C:/Windows/Fonts/consola.ttf", 16.0f);
+#elif defined(__linux__) || defined(__FreeBSD__)
+        gameFont = DotBlue::LoadFont("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 16.0f);
+#endif
+        std::cout << "Game font loaded successfully" << std::endl;
         
         // Try to load a texture (optional - we'll handle if it fails)
         starTexture = 0;
@@ -158,6 +167,7 @@ public:
             DotBlue::TexturedQuadShader(starTexture, 500.0f, 100.0f, 580.0f, 180.0f);
         }
         
+    
         // ImGui rendering
         ImGuiIO& io = ImGui::GetIO();
         io.DisplaySize.x = (float)width;
@@ -184,6 +194,36 @@ public:
         
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        
+        // Test GLPrintf functionality with yellow text at (20, 20)
+        // Do this AFTER all shader-based rendering to avoid state conflicts
+        // Set up OpenGL state for legacy rendering (GLPrintf uses immediate mode)
+        glUseProgram(0); // Disable shaders to use fixed function pipeline
+        
+        // Set up orthographic projection for 2D text rendering
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+        glOrtho(0.0, (double)width, (double)height, 0.0, -1.0, 1.0); // Top-left origin
+        
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
+        
+        // Ensure proper state for text rendering
+        glEnable(GL_TEXTURE_2D);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glDisable(GL_DEPTH_TEST);
+        
+        DotBlue::RGBA yellowColor(1.0f, 1.0f, 0.0f, 1.0f); // Yellow color
+        DotBlue::GLPrintf(gameFont, 20.0f, 20.0f, yellowColor, "GLPrintf Test: Rotation %.1f degrees", rotation);
+        
+        // Restore matrices
+        glPopMatrix();
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
+        glMatrixMode(GL_MODELVIEW);
         
        // std::cout << "Rendering space objects... rotation: " << rotation << std::endl;
     }
