@@ -35,7 +35,7 @@ int DB_Test()
 
     void* ptr = allocator.allocate();
     if (ptr) {
-        std::strcpy((char*)ptr, "Hello, mapped memory!");
+        strcpy_s((char*)ptr, 64, "Hello, mapped memory!"); // Use safe version
         std::cout << (char*)ptr << "\n";
         allocator.free(ptr);
     }

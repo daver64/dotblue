@@ -29,6 +29,11 @@ namespace DotBlue
     class InputManager;
     class InputBindings;
 
+#ifdef _WIN32
+#pragma warning(push)
+#pragma warning(disable: 4251) // STL types in DLL interface
+#endif
+
     class DOTBLUE_API SmoothRenderer
     {
     public:
@@ -98,6 +103,10 @@ namespace DotBlue
         std::chrono::high_resolution_clock::time_point m_lastFrameTime;
         static constexpr double TARGET_FRAME_TIME_MS = 1000.0 / 60.0; // 60 FPS
     };
+
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 
     // Global smooth renderer instance management
     DOTBLUE_API bool InitializeSmoothRenderer();
