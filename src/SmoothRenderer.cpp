@@ -1,4 +1,4 @@
-#include "DotBlue/ThreadedRenderer.h"
+#include "DotBlue/SmoothRenderer.h"
 #include "DotBlue/GLPlatform.h"
 #include "DotBlue/DotBlue.h"
 #include "DotBlue/Input.h"
@@ -21,10 +21,10 @@ extern GLXContext modernCtx;
 
 namespace DotBlue
 {
-    // Global threaded renderer instance
-    static ThreadedRenderer* g_threadedRenderer = nullptr;
+    // Global smooth renderer instance
+    static SmoothRenderer* g_smoothRenderer = nullptr;
 
-    ThreadedRenderer::ThreadedRenderer()
+    SmoothRenderer::SmoothRenderer()
         : m_running(false)
         , m_shouldStop(false)
         , m_renderThread(nullptr)
@@ -43,13 +43,13 @@ namespace DotBlue
         m_renderState.inputStateValid = false;
     }
 
-    ThreadedRenderer::~ThreadedRenderer()
+    SmoothRenderer::~SmoothRenderer()
     {
         Stop();
         CleanupRenderContext();
     }
 
-    bool ThreadedRenderer::Initialize()
+    bool SmoothRenderer::Initialize()
     {
         std::cout << "Initializing threaded renderer..." << std::endl;
         
@@ -63,7 +63,7 @@ namespace DotBlue
         return true;
     }
 
-    void ThreadedRenderer::Start()
+    void SmoothRenderer::Start()
     {
         if (m_running.load())
         {
@@ -77,11 +77,11 @@ namespace DotBlue
         m_newFrameAvailable = false;
         m_lastFrameTime = std::chrono::high_resolution_clock::now();
         
-        m_renderThread = std::make_unique<std::thread>(&ThreadedRenderer::RenderThreadMain, this);
+        m_renderThread = std::make_unique<std::thread>(&SmoothRenderer::RenderThreadMain, this);
         std::cout << "Render thread started" << std::endl;
     }
 
-    void ThreadedRenderer::Stop()
+    void SmoothRenderer::Stop()
     {
         if (!m_running.load())
         {
@@ -108,7 +108,7 @@ namespace DotBlue
         std::cout << "Render thread stopped" << std::endl;
     }
 
-    void ThreadedRenderer::UpdateRenderState(float deltaTime, const InputManager& input, const InputBindings& bindings)
+    void SmoothRenderer::UpdateRenderState(float deltaTime, const InputManager& input, const InputBindings& bindings)
     {
         std::lock_guard<std::mutex> lock(m_stateMutex);
         
@@ -122,14 +122,14 @@ namespace DotBlue
         m_frameReady.notify_one();
     }
 
-    void ThreadedRenderer::OnWindowResize(int width, int height)
+    void SmoothRenderer::OnWindowResize(int width, int height)
     {
         std::lock_guard<std::mutex> lock(m_stateMutex);
         m_renderState.windowWidth = width;
         m_renderState.windowHeight = height;
     }
 
-    bool ThreadedRenderer::CreateRenderContext()
+    bool SmoothRenderer::CreateRenderContext()
     {
 #if defined(_WIN32)
         if (!hwnd || !hdc || !modernContext)
@@ -193,7 +193,7 @@ namespace DotBlue
 #endif
     }
 
-    void ThreadedRenderer::CleanupRenderContext()
+    void SmoothRenderer::CleanupRenderContext()
     {
         if (m_sharedContext)
         {
@@ -206,7 +206,7 @@ namespace DotBlue
         }
     }
 
-    void ThreadedRenderer::RenderThreadMain()
+    void SmoothRenderer::RenderThreadMain()
     {
         std::cout << "Render thread started executing" << std::endl;
 
@@ -280,36 +280,36 @@ namespace DotBlue
     }
 
     // Global functions
-    bool InitializeThreadedRenderer()
+    bool InitializeSmoothRenderer()
     {
-        if (g_threadedRenderer)
+        if (g_smoothRenderer)
         {
             std::cout << "Threaded renderer already initialized" << std::endl;
             return true;
         }
 
-        g_threadedRenderer = new ThreadedRenderer();
-        if (!g_threadedRenderer->Initialize())
+        g_smoothRenderer = new SmoothRenderer();
+        if (!g_smoothRenderer->Initialize())
         {
-            delete g_threadedRenderer;
-            g_threadedRenderer = nullptr;
+            delete g_smoothRenderer;
+            g_smoothRenderer = nullptr;
             return false;
         }
 
         return true;
     }
 
-    void ShutdownThreadedRenderer()
+    void ShutdownSmoothRenderer()
     {
-        if (g_threadedRenderer)
+        if (g_smoothRenderer)
         {
-            delete g_threadedRenderer;
-            g_threadedRenderer = nullptr;
+            delete g_smoothRenderer;
+            g_smoothRenderer = nullptr;
         }
     }
 
-    ThreadedRenderer* GetThreadedRenderer()
+    SmoothRenderer* GetSmoothRenderer()
     {
-        return g_threadedRenderer;
+        return g_smoothRenderer;
     }
 }

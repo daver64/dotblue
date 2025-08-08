@@ -29,7 +29,7 @@ int GameBase::Run()
     return DotBlue::RunGame(m_running);
 }
 
-int GameBase::RunThreaded()
+int GameBase::RunSmooth()
 {
     // Set up callbacks for this game instance
     DotBlue::SetGameCallbacks(
@@ -42,7 +42,7 @@ int GameBase::RunThreaded()
         }
     );
     
-    // Run the game using DotBlue's threaded window system
+    // Run the game using DotBlue's smooth window system
     m_running = true;
-    return DotBlue::RunGameThreaded(m_running);
+    return DotBlue::RunGameSmooth(m_running);
 }

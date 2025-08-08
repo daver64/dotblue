@@ -14,7 +14,7 @@
 #include <string>
 #include <thread>
 #include <DotBlue/GLPlatform.h>
-#include <DotBlue/ThreadedRenderer.h>
+#include <DotBlue/SmoothRenderer.h>
 #include <DotBlue/Input.h>
 #include "imgui.h"
 #include "backends/imgui_impl_opengl3.h"
@@ -321,7 +321,7 @@ namespace DotBlue
         glXSwapBuffers(display, win);
     }
 
-    void RunWindowThreaded(std::atomic<bool> &running)
+    void RunWindowSmooth(std::atomic<bool> &running)
     {
         const double targetFrameTime = 1000.0 / 60.0; // 60 FPS target (ms)
         display = XOpenDisplay(nullptr);

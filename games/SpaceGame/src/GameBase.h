@@ -17,8 +17,8 @@ public:
     // Main game loop
     int Run();
     
-    // Threaded game loop (prevents window-move freezing)
-    int RunThreaded();
+    // Smooth game loop (prevents window-move freezing)
+    int RunSmooth();
     
     // Override these in your game
     virtual bool Initialize() = 0;
@@ -46,10 +46,10 @@ int main() \
     return game.Run(); \
 }
 
-// Threaded version that prevents window-move freezing
-#define DOTBLUE_GAME_MAIN_THREADED(GameClass) \
+// Smooth version that prevents window-move freezing
+#define DOTBLUE_GAME_MAIN_SMOOTH(GameClass) \
 int main() \
 { \
     GameClass game; \
-    return game.RunThreaded(); \
+    return game.RunSmooth(); \
 }

@@ -2,7 +2,7 @@
 #ifdef _WIN32
 #include <DotBlue/DotBlue.h>
 #include <DotBlue/GLPlatform.h>
-#include <DotBlue/ThreadedRenderer.h>
+#include <DotBlue/SmoothRenderer.h>
 #include <windows.h>
 #include <GL/glew.h>
 #include <GL/gl.h>
@@ -243,7 +243,7 @@ namespace DotBlue
         SwapBuffers(hdc);
     }
 
-    void RunWindowThreaded(std::atomic<bool> &running)
+    void RunWindowSmooth(std::atomic<bool> &running)
     {
         // Create window (copied from existing RunWindow function)
         WNDCLASS wc = {};
@@ -316,42 +316,113 @@ namespace DotBlue
         ImGui_ImplOpenGL3_Init("#version 400");
         DotBlue::InitApp();
 
-        std::cout << "Starting timer-based rendering loop..." << std::endl;
+        std::cout << "Starting high-precision rendering loop..." << std::endl;
 
-        // Set up a timer for 60 FPS rendering (16.67ms intervals)
-        UINT_PTR timerId = SetTimer(hwnd, 1, 16, TimerRenderProc);
-        if (!timerId)
-        {
-            std::cerr << "Failed to create render timer!" << std::endl;
-            running = false;
-            return;
-        }
+        // High-precision timing setup
+        LARGE_INTEGER frequency, lastTime, currentTime;
+        QueryPerformanceFrequency(&frequency);
+        QueryPerformanceCounter(&lastTime);
+        
+        const double targetFPS = 60.0;
+        const double frameTime = 1.0 / targetFPS;
+        double accumulator = 0.0;
 
-        // Main message loop - this now only handles messages, rendering is timer-driven
+        // Main game loop with high-precision timing
         while (running)
         {
+            // Process Windows messages (non-blocking)
             MSG msg;
-            BOOL result = GetMessage(&msg, nullptr, 0, 0);
-            
-            if (result == 0) // WM_QUIT
+            while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
             {
-                running = false;
-                break;
-            }
-            else if (result == -1) // Error
-            {
-                std::cerr << "GetMessage error" << std::endl;
-                break;
+                if (msg.message == WM_QUIT)
+                {
+                    running = false;
+                    break;
+                }
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
             }
             
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
+            if (!running) break;
+
+            // High-precision timing
+            QueryPerformanceCounter(&currentTime);
+            double deltaTime = (double)(currentTime.QuadPart - lastTime.QuadPart) / frequency.QuadPart;
+            lastTime = currentTime;
+            
+            accumulator += deltaTime;
+            
+            // Render at target framerate
+            if (accumulator >= frameTime)
+            {
+                // Make the context current and render frame
+                wglMakeCurrent(hdc, modernContext);
+                
+                // Calculate delta time
+                static auto lastFrameTime = std::chrono::high_resolution_clock::now();
+                auto currentFrameTime = std::chrono::high_resolution_clock::now();
+                float gameDeltaTime = std::chrono::duration<float>(currentFrameTime - lastFrameTime).count();
+                lastFrameTime = currentFrameTime;
+
+                // Update input system
+                UpdateInput();
+                InputManager& input = GetInputManager();
+                InputBindings& bindings = GetInputBindings();
+
+                // Call game input and update
+                DotBlue::CallGameInput(input, bindings);
+                DotBlue::CallGameUpdate(gameDeltaTime);
+
+                // Set up viewport
+                RECT rect;
+                GetClientRect(hwnd, &rect);
+                int width = rect.right - rect.left;
+                int height = rect.bottom - rect.top;
+                glViewport(0, 0, width, height);
+
+                // Default clear color
+                glClearColor(0.2f, 0.3f, 0.4f, 1.0f);
+                glClear(GL_COLOR_BUFFER_BIT);
+
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+                // Call game rendering
+                DotBlue::CallGameRender();
+
+                // ImGui rendering
+                ImGuiIO &io = ImGui::GetIO();
+                io.DisplaySize.x = static_cast<float>(width);
+                io.DisplaySize.y = static_cast<float>(height);
+
+                ImGui_ImplWin32_NewFrame();
+                ImGui_ImplOpenGL3_NewFrame();
+                ImGui::NewFrame();
+
+                // Default ImGui demo with FPS display
+                ImGui::Begin("DotBlue Engine (High-Precision)");
+                ImGui::Text("Welcome to DotBlue!");
+                ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 
+                           1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+                ImGui::Text("Target: %.1f FPS", targetFPS);
+                ImGui::End();
+
+                ImGui::Render();
+                ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+                // Swap buffers
+                SwapBuffers(hdc);
+                
+                accumulator = 0.0;
+            }
+            else
+            {
+                // Sleep for a very short time to prevent excessive CPU usage
+                Sleep(1);
+            }
         }
 
-        // Cleanup timer
-        KillTimer(hwnd, timerId);
-
-        std::cout << "Stopping timer-based renderer..." << std::endl;
+        std::cout << "Stopping high-precision renderer..." << std::endl;
 
         DotBlue::ShutdownApp();
         wglMakeCurrent(nullptr, nullptr);

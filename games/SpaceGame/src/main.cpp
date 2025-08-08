@@ -121,5 +121,5 @@ public:
     }
 };
 
-// Use the convenience macro to create main function with threaded renderer
-DOTBLUE_GAME_MAIN_THREADED(SpaceGame)
+// Use the convenience macro to create main function with smooth renderer
+DOTBLUE_GAME_MAIN_SMOOTH(SpaceGame)

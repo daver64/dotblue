@@ -2,7 +2,7 @@
 #include "DotBlue/MemChunkAllocator.h"
 #include "DotBlue/ColourConsole.h"
 #include "DotBlue/GLPlatform.h"
-#include "DotBlue/ThreadedRenderer.h"
+#include "DotBlue/SmoothRenderer.h"
 #include <iostream>
 #include <cstring>
 
@@ -84,21 +84,6 @@ void SetGameCallbacks(
     g_gameInput = inputCallback;
 }
 
-int RunGame(std::atomic<bool>& running)
-{
-    // This will create window, initialize OpenGL, call InitApp, etc.
-    // The game callbacks will be called from within the main loop
-    DotBlue::RunWindow(running);
-    return 0;
-}
-
-int RunGameThreaded(std::atomic<bool>& running)
-{
-    // This will create window with threaded renderer
-    DotBlue::RunWindowThreaded(running);
-    return 0;
-}
-
 // Callback accessor functions (for internal use)
 bool CallGameInit()
 {
@@ -136,6 +121,19 @@ void CallGameInput(const InputManager& input, const InputBindings& bindings)
     }
 }
 
+int RunGame(std::atomic<bool>& running)
+{
+    // This will create window, initialize OpenGL, call InitApp, etc.
+    // The game callbacks will be called from within the main loop
+    RunWindow(running);
+    return 0;
+}
 
+int RunGameSmooth(std::atomic<bool>& running)
+{
+    // This will create window with smooth renderer
+    RunWindowSmooth(running);
+    return 0;
+}
 
 }
