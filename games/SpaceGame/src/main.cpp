@@ -112,9 +112,12 @@ public:
     
     void Render() override 
     {
-        // Don't clear here - DotBlue handles screen clearing
-        // glClearColor(0.1f, 0.1f, 0.3f, 1.0f);
-        // glClear(GL_COLOR_BUFFER_BIT);
+        // Set up OpenGL state - this is now the game's responsibility
+        glClearColor(0.1f, 0.1f, 0.3f, 1.0f);  // Dark blue background
+        glClear(GL_COLOR_BUFFER_BIT);
+        
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         
         // Get window size for shader uniform
         int width = 800, height = 600; // Default window size, you can get actual size from DotBlue

@@ -158,13 +158,6 @@ namespace DotBlue
         // Set up viewport for modern OpenGL
         glViewport(0, 0, width, height);
 
-        // Default clear color (games can override this)
-        glClearColor(0.2f, 0.3f, 0.4f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
         // Call game rendering
         DotBlue::CallGameRender();
 
