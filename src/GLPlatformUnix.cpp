@@ -14,7 +14,6 @@
 #include <string>
 #include <thread>
 #include <DotBlue/GLPlatform.h>
-#include <DotBlue/SmoothRenderer.h>
 #include <DotBlue/Input.h>
 
 // Global X11 variables (accessible by ThreadedRenderer.cpp)

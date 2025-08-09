@@ -2,13 +2,14 @@
 #ifdef _WIN32
 #include <DotBlue/DotBlue.h>
 #include <DotBlue/GLPlatform.h>
-#include <DotBlue/SmoothRenderer.h>
 #include <windows.h>
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <DotBlue/wglext.h>
 #include <iostream>
 #include <vector>
+#include <thread>
+#include <chrono>
 #include <string>
 #include <chrono>
 

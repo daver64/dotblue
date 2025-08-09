@@ -2,7 +2,6 @@
 #include "DotBlue/MemChunkAllocator.h"
 #include "DotBlue/ColourConsole.h"
 #include "DotBlue/GLPlatform.h"
-#include "DotBlue/SmoothRenderer.h"
 #include <iostream>
 #include <cstring>
 

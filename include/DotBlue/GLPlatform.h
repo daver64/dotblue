@@ -124,6 +124,7 @@ namespace DotBlue
     void InitApp();
     void ShutdownApp();
     void RunWindow(std::atomic<bool> &running);
+    void RunWindowSmooth(std::atomic<bool> &running);
     void UpdateAndRender();
 
     #if defined(linux) || defined(__FreeBSD__)
