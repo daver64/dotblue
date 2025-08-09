@@ -17,7 +17,6 @@ endif()
 
 set(DOTBLUE_SOURCES
     src/DotBlue.cpp
-    src/MemChunkAllocator.cpp
     src/GLImage.cpp
     src/GLTextureAtlas.cpp
     src/GLShader.cpp

@@ -29,11 +29,6 @@ namespace DotBlue
     typedef std::function<void()> GameShutdownCallback;
     typedef std::function<void(const InputManager&, const InputBindings&)> GameInputCallback;
 
-    DOTBLUE_API void Hello();
-    DOTBLUE_API int DB_Test();
-    DOTBLUE_API int Console_Test();
-    DOTBLUE_API int GL_Test();
-    
     // Game callback system
     DOTBLUE_API void SetGameCallbacks(
         GameInitCallback initCallback,

@@ -64,14 +64,8 @@ void GLTextureAtlas::bind() const {
 }
 
 void GLTextureAtlas::draw_quad(float x, float y, float w, float h) const {
-    glEnable(GL_TEXTURE_2D);
-    bind();
-    glBegin(GL_QUADS);
-        glTexCoord2f(u0, v0); glVertex2f(x,     y);
-        glTexCoord2f(u1, v0); glVertex2f(x + w, y);
-        glTexCoord2f(u1, v1); glVertex2f(x + w, y + h);
-        glTexCoord2f(u0, v1); glVertex2f(x,     y + h);
-    glEnd();
+    // Use modern shader-based rendering instead of legacy immediate mode
+    TexturedQuadShaderUV(textureID, x, y, x + w, y + h, u0, v0, u1, v1);
 }
 
 }

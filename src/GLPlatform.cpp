@@ -67,36 +67,6 @@ namespace DotBlue
         DotBlue::CallGameInit();
     }
 
-    void TestInputSystem()
-    {
-        std::cout << "DotBlue Input System Test" << std::endl;
-        std::cout << "=========================" << std::endl;
-
-        // Initialize the application
-
-        // Get input references
-        InputManager &input = GetInputManager();
-        InputBindings &bindings = GetInputBindings();
-
-        std::cout << "Input system initialized!" << std::endl;
-        std::cout << "Connected controllers: " << input.getControllerCount() << std::endl;
-
-        // Test some basic functionality
-        std::cout << "\nTesting key bindings:" << std::endl;
-        auto forwardKeys = bindings.getKeyBindings(Action::MOVE_FORWARD);
-        std::cout << "MOVE_FORWARD bound to " << forwardKeys.size() << " keys" << std::endl;
-
-        auto fireButtons = bindings.getMouseBindings(Action::FIRE_PRIMARY);
-        std::cout << "FIRE_PRIMARY bound to " << fireButtons.size() << " mouse buttons" << std::endl;
-
-        std::cout << "\nPress keys to test input (this is just initialization test)" << std::endl;
-        std::cout << "In a real game, you would use this in your main loop" << std::endl;
-
-        // Example of how you'd use it in a game loop:
-        std::cout << "if (bindings.isActionPressed(Action::MOVE_FORWARD, input)) {" << std::endl;
-        std::cout << "    movePlayerForward();" << std::endl;
-        std::cout << "}" << std::endl;
-    }
     void ShutdownApp()
     {
         // Shutdown input system
