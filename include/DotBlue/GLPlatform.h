@@ -38,6 +38,40 @@
 #endif
 namespace DotBlue
 {
+    // Double-precision camera for planetary rendering
+    class GLCamera {
+    public:
+        GLCamera();
+        void setPosition(const glm::dvec3& pos);
+        void setTarget(const glm::dvec3& target);
+        void setUp(const glm::dvec3& up);
+        void setFOV(double fovDegrees);
+        void setAspect(double aspect);
+        void setNearFar(double nearPlane, double farPlane);
+
+        const glm::dvec3& getPosition() const;
+        const glm::dvec3& getTarget() const;
+        const glm::dvec3& getUp() const;
+        double getFOV() const;
+        double getAspect() const;
+        double getNear() const;
+        double getFar() const;
+
+        glm::dmat4 getViewMatrix() const;
+        glm::dmat4 getProjectionMatrix() const;
+
+        void move(const glm::dvec3& delta);
+        void rotate(double yaw, double pitch);
+
+    private:
+        glm::dvec3 position;
+        glm::dvec3 target;
+        glm::dvec3 up;
+        double fov;
+        double aspect;
+        double nearPlane;
+        double farPlane;
+    };
     // GLM type aliases for convenience
     using Vec2 = glm::vec2;
     using Vec3 = glm::vec3;

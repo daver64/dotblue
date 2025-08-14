@@ -26,6 +26,7 @@ set(DOTBLUE_SOURCES
     src/GLPlatformUnix.cpp
     src/GLPlatform.cpp
     src/GLPrintf.cpp
+    src/GLCamera.cpp
 )
 
 add_library(DotBlue ${LIB_TYPE} ${DOTBLUE_SOURCES})
