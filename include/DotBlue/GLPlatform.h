@@ -47,27 +47,27 @@ namespace DotBlue
     // Double-precision camera for planetary rendering
     class GLCamera {
     public:
-        GLCamera();
-        void setPosition(const glm::dvec3& pos);
-        void setTarget(const glm::dvec3& target);
-        void setUp(const glm::dvec3& up);
-        void setFOV(double fovDegrees);
-        void setAspect(double aspect);
-        void setNearFar(double nearPlane, double farPlane);
+        DOTBLUE_API GLCamera();
+        DOTBLUE_API void setPosition(const glm::dvec3& pos);
+        DOTBLUE_API void setTarget(const glm::dvec3& target);
+        DOTBLUE_API void setUp(const glm::dvec3& up);
+        DOTBLUE_API void setFOV(double fovDegrees);
+        DOTBLUE_API void setAspect(double aspect);
+        DOTBLUE_API void setNearFar(double nearPlane, double farPlane);
 
-        const glm::dvec3& getPosition() const;
-        const glm::dvec3& getTarget() const;
-        const glm::dvec3& getUp() const;
-        double getFOV() const;
-        double getAspect() const;
-        double getNear() const;
-        double getFar() const;
+        DOTBLUE_API const glm::dvec3& getPosition() const;
+        DOTBLUE_API const glm::dvec3& getTarget() const;
+        DOTBLUE_API const glm::dvec3& getUp() const;
+        DOTBLUE_API double getFOV() const;
+        DOTBLUE_API double getAspect() const;
+        DOTBLUE_API double getNear() const;
+        DOTBLUE_API double getFar() const;
 
-        glm::dmat4 getViewMatrix() const;
-        glm::dmat4 getProjectionMatrix() const;
+        DOTBLUE_API glm::dmat4 getViewMatrix() const;
+        DOTBLUE_API glm::dmat4 getProjectionMatrix() const;
 
-        void move(const glm::dvec3& delta);
-        void rotate(double yaw, double pitch);
+        DOTBLUE_API void move(const glm::dvec3& delta);
+        DOTBLUE_API void rotate(double yaw, double pitch);
 
     private:
         glm::dvec3 position;
