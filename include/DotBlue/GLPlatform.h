@@ -38,6 +38,12 @@
 #endif
 namespace DotBlue
 {
+    // Spherical coordinates: latitude (deg), longitude (deg), radius (meters)
+    struct SphericalCoord {
+        double latitude;   // Degrees, -90 (south pole) to +90 (north pole)
+        double longitude;  // Degrees, -180 to +180
+        double radius;     // Meters (or your unit)
+    };
     // Double-precision camera for planetary rendering
     class GLCamera {
     public:

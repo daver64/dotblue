@@ -3,6 +3,22 @@
 namespace DotBlue {
 namespace Math {
 
+glm::dvec3 sphericalToCartesian(const SphericalCoord& sph) {
+    double latRad = glm::radians(sph.latitude);
+    double lonRad = glm::radians(sph.longitude);
+    double x = sph.radius * std::cos(latRad) * std::cos(lonRad);
+    double y = sph.radius * std::sin(latRad);
+    double z = sph.radius * std::cos(latRad) * std::sin(lonRad);
+    return glm::dvec3(x, y, z);
+}
+
+SphericalCoord cartesianToSpherical(const glm::dvec3& v) {
+    double r = glm::length(v);
+    double lat = glm::degrees(std::asin(v.y / r));
+    double lon = glm::degrees(std::atan2(v.z, v.x));
+    return SphericalCoord{lat, lon, r};
+}
+
 Mat4 perspective(float fov, float aspect, float near, float far) {
     return glm::perspective(fov, aspect, near, far);
 }
