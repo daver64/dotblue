@@ -25,6 +25,8 @@ endif()
 set(GAME_SOURCES
     src/main.cpp
     src/GameBase.cpp
+    src/IniFile.cpp
+    src/FileSystem.cpp
 )
 
 # Set ImGui path - use local copy for cross-platform consistency
