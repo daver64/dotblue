@@ -1,4 +1,4 @@
-#include "GameBase.h"
+#include "KosmosBase.h"
 #include <fstream>
 #include <sstream>
 #include <algorithm>

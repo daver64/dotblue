@@ -4,6 +4,7 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/include",
+                "${workspaceFolder}/DotBlue",
                 "${workspaceFolder}/games/kosmos/include",
                 "C:/Users/daver/LocalApps/SDL2-2.32.6/include",
                 "C:/Users/daver/LocalApps/SDL2_mixer-2.8.1/include",

@@ -44,7 +44,7 @@ namespace DotBlue
 
         // Load default font
         glapp_default_font = LoadFont(default_font_str);
-        
+
         // Set application title
         SetApplicationTitle("DotBlue Engine");
 
@@ -62,7 +62,7 @@ namespace DotBlue
                 SDL_Quit();
             }
         }
-        
+
         // Call game initialization if available
         DotBlue::CallGameInit();
     }
@@ -112,21 +112,22 @@ namespace DotBlue
         auto currentTime = std::chrono::high_resolution_clock::now();
         float deltaTime = std::chrono::duration<float>(currentTime - lastTime).count();
         lastTime = currentTime;
-        
+
         // Update input system
         UpdateInput();
-        
+
         // Get input references for game callback
-        InputManager& input = GetInputManager();
-        InputBindings& bindings = GetInputBindings();
-        
+        InputManager &input = GetInputManager();
+        InputBindings &bindings = GetInputBindings();
+
         // Call game input handling
         DotBlue::CallGameInput(input, bindings);
-        
+
         // Call game update
         DotBlue::CallGameUpdate(deltaTime);
 
-        int width = 800, height = 600; // You may want to make these dynamic
+        int width = 0, height = 0;
+        GetRenderWindowSize(width, height);
 
         // Set up viewport for modern OpenGL
         glViewport(0, 0, width, height);

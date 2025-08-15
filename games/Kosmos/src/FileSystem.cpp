@@ -1,6 +1,6 @@
 
 #define _CRT_SECURE_NO_WARNINGS
-#include "GameBase.h"
+#include "KosmosBase.h"
 #include <cstdlib>
 #include <filesystem>
 

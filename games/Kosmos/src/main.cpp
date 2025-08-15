@@ -1,5 +1,5 @@
 #define SDL_MAIN_HANDLED  // Prevent SDL from redefining main
-#include "GameBase.h"
+#include "KosmosBase.h"
 #include "DotBlue/DotBlue.h"
 #include "DotBlue/GLPlatform.h"
 
@@ -41,7 +41,7 @@ static void HandleX11Event(void* xevent);
 #include <chrono>
 #include <thread>
 
-class Kosmos : public GameBase
+class Kosmos : public KosmosBase
 {
 private:
     DotBlue::GLCamera camera;
@@ -130,11 +130,6 @@ public:
     void Shutdown() override
     {
     std::cout << "[Kosmos] Shutdown() called." << std::endl; std::cout.flush();
-#ifdef _WIN32
-    Sleep(1000);
-#else
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-#endif
     ImGui_ImplOpenGL3_Shutdown();
 #ifdef _WIN32
     ImGui_ImplWin32_Shutdown();

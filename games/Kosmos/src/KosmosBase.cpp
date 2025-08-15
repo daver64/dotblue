@@ -1,17 +1,17 @@
-#include "GameBase.h"
+#include "KosmosBase.h"
 #include <DotBlue/Input.h>
 
-GameBase::GameBase() 
+KosmosBase::KosmosBase() 
     : m_running(false)
     , m_deltaTime(0.0f)
 {
 }
 
-GameBase::~GameBase()
+KosmosBase::~KosmosBase()
 {
 }
 
-int GameBase::Run()
+int KosmosBase::Run()
 {
     // Set up callbacks for this game instance
     DotBlue::SetGameCallbacks(
@@ -29,7 +29,7 @@ int GameBase::Run()
     return DotBlue::RunGame(m_running);
 }
 
-int GameBase::RunSmooth()
+int KosmosBase::RunSmooth()
 {
     // Set up callbacks for this game instance
     DotBlue::SetGameCallbacks(

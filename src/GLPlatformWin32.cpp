@@ -1,3 +1,8 @@
+
+#include <windows.h>
+
+// Ensure hwnd is declared before use in GetRenderWindowSize
+
 // platform_win32.cpp
 #ifdef _WIN32
 #include <DotBlue/DotBlue.h>
@@ -34,9 +39,11 @@ static DotBlue::WindowMessageCallback g_windowMessageCallback = nullptr;
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     // Allow games to handle window messages first (e.g., for ImGui)
-    if (g_windowMessageCallback) {
+    if (g_windowMessageCallback)
+    {
         LRESULT result = g_windowMessageCallback(hwnd, uMsg, wParam, lParam);
-        if (result != 0) {
+        if (result != 0)
+        {
             return result; // Game handled the message
         }
     }
@@ -67,7 +74,7 @@ void CALLBACK GlobalTimerRenderProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWOR
 {
     // Make the context current
     wglMakeCurrent(hdc, modernContext);
-    
+
     // Calculate delta time
     static auto lastTime = std::chrono::high_resolution_clock::now();
     auto currentTime = std::chrono::high_resolution_clock::now();
@@ -76,8 +83,8 @@ void CALLBACK GlobalTimerRenderProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWOR
 
     // Update input system
     DotBlue::UpdateInput();
-    DotBlue::InputManager& input = DotBlue::GetInputManager();
-    DotBlue::InputBindings& bindings = DotBlue::GetInputBindings();
+    DotBlue::InputManager &input = DotBlue::GetInputManager();
+    DotBlue::InputBindings &bindings = DotBlue::GetInputBindings();
 
     // Call game input and update
     DotBlue::CallGameInput(input, bindings);
@@ -103,7 +110,20 @@ HGLRC modernContext;
 HGLRC tempContext;
 namespace DotBlue
 {
-    
+    void GetRenderWindowSize(int &width, int &height)
+    {
+        RECT rect;
+        if (hwnd && GetClientRect(hwnd, &rect))
+        {
+            width = rect.right - rect.left;
+            height = rect.bottom - rect.top;
+        }
+        else
+        {
+            width = 800;
+            height = 600;
+        }
+    }
     HDC glapp_hdc;
     void GLSwapBuffers()
     {
@@ -236,7 +256,7 @@ namespace DotBlue
     {
         // Make the context current
         wglMakeCurrent(hdc, modernContext);
-        
+
         // Calculate delta time
         static auto lastTime = std::chrono::high_resolution_clock::now();
         auto currentTime = std::chrono::high_resolution_clock::now();
@@ -245,8 +265,8 @@ namespace DotBlue
 
         // Update input system
         UpdateInput();
-        InputManager& input = GetInputManager();
-        InputBindings& bindings = GetInputBindings();
+        InputManager &input = GetInputManager();
+        InputBindings &bindings = GetInputBindings();
 
         // Call game input and update
         DotBlue::CallGameInput(input, bindings);
@@ -301,7 +321,7 @@ namespace DotBlue
 
         // Try to create a modern context
         modernContext = nullptr;
-        PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = 
+        PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB =
             (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
 
         if (wglCreateContextAttribsARB)
@@ -310,8 +330,7 @@ namespace DotBlue
                 WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
                 WGL_CONTEXT_MINOR_VERSION_ARB, 4,
                 WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB,
-                0
-            };
+                0};
             modernContext = wglCreateContextAttribsARB(hdc, 0, contextAttribs);
             if (modernContext)
             {
@@ -340,7 +359,7 @@ namespace DotBlue
         LARGE_INTEGER frequency, lastTime, currentTime;
         QueryPerformanceFrequency(&frequency);
         QueryPerformanceCounter(&lastTime);
-        
+
         const double targetFPS = 60.0;
         const double frameTime = 1.0 / targetFPS;
         double accumulator = 0.0;
@@ -362,22 +381,23 @@ namespace DotBlue
                 TranslateMessage(&msg);
                 DispatchMessage(&msg);
             }
-            
-            if (!running) break;
+
+            if (!running)
+                break;
 
             // High-precision timing
             QueryPerformanceCounter(&currentTime);
             double deltaTime = (double)(currentTime.QuadPart - lastTime.QuadPart) / frequency.QuadPart;
             lastTime = currentTime;
-            
+
             accumulator += deltaTime;
-            
+
             // Render at target framerate (but skip if in size/move - timer handles it)
             if (accumulator >= frameTime && !g_inSizeMove)
             {
                 // Make the context current and render frame
                 wglMakeCurrent(hdc, modernContext);
-                
+
                 // Calculate delta time
                 static auto lastFrameTime = std::chrono::high_resolution_clock::now();
                 auto currentFrameTime = std::chrono::high_resolution_clock::now();
@@ -386,8 +406,8 @@ namespace DotBlue
 
                 // Update input system
                 UpdateInput();
-                InputManager& input = GetInputManager();
-                InputBindings& bindings = GetInputBindings();
+                InputManager &input = GetInputManager();
+                InputBindings &bindings = GetInputBindings();
 
                 // Call game input and update
                 DotBlue::CallGameInput(input, bindings);
@@ -405,7 +425,7 @@ namespace DotBlue
 
                 // Swap buffers
                 SwapBuffers(hdc);
-                
+
                 accumulator = 0.0;
             }
             else
@@ -432,9 +452,9 @@ namespace DotBlue
         g_windowMessageCallback = callback;
     }
 
-    void* GetWindowHandle()
+    void *GetWindowHandle()
     {
-        return static_cast<void*>(hwnd);
+        return static_cast<void *>(hwnd);
     }
 
 }

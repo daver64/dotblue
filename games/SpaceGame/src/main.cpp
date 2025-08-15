@@ -1,5 +1,5 @@
 #define SDL_MAIN_HANDLED  // Prevent SDL from redefining main
-#include "GameBase.h"
+#include "KosmosBase.h"
 #include "DotBlue/DotBlue.h"
 #include "DotBlue/GLPlatform.h"
 
@@ -38,7 +38,7 @@ static long HandleWindowMessage(void* hwnd, unsigned int msg, unsigned long long
 static void HandleX11Event(void* xevent);
 #endif
 
-class SpaceGame : public GameBase
+class SpaceGame : public KosmosBase
 {
 private:
     unsigned int starTexture;

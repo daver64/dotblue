@@ -1,3 +1,4 @@
+
 // platform_x11.cpp
 #if defined(__linux__) || defined(__FreeBSD__)
 #include <GL/glew.h>
@@ -26,6 +27,17 @@ static DotBlue::X11EventCallback g_x11EventCallback = nullptr;
 
 namespace DotBlue
 {
+ void GetRenderWindowSize(int& width, int& height) {
+    if (display && win) {
+        XWindowAttributes gwa;
+        XGetWindowAttributes(display, win, &gwa);
+        width = gwa.width;
+        height = gwa.height;
+    } else {
+        width = 800;
+        height = 600;
+    }
+}   
     void SetX11EventCallback(X11EventCallback callback)
     {
         g_x11EventCallback = callback;

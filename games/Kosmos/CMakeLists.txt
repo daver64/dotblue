@@ -24,7 +24,7 @@ endif()
 # Game source files
 set(GAME_SOURCES
     src/main.cpp
-    src/GameBase.cpp
+    src/KosmosBase.cpp
     src/IniFile.cpp
     src/FileSystem.cpp
 )
