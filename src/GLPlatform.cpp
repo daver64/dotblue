@@ -69,6 +69,9 @@ namespace DotBlue
 
     void ShutdownApp()
     {
+        // Call game shutdown callback
+        DotBlue::CallGameShutdown();
+
         // Shutdown input system
         ShutdownInput();
 

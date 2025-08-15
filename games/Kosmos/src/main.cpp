@@ -38,6 +38,9 @@ static long HandleWindowMessage(void* hwnd, unsigned int msg, unsigned long long
 static void HandleX11Event(void* xevent);
 #endif
 
+#include <chrono>
+#include <thread>
+
 class Kosmos : public GameBase
 {
 private:
@@ -45,6 +48,9 @@ private:
     bool showKosmosUI;
 
 public:
+    Kosmos() { std::cout << "[Kosmos] Constructor called." << std::endl; }
+    ~Kosmos() { std::cout << "[Kosmos] Destructor called." << std::endl; }
+
     bool Initialize() override
     {
     std::cout << "Initializing Kosmos..." << std::endl;
@@ -123,12 +129,18 @@ public:
 
     void Shutdown() override
     {
-    std::cout << "Shutting down Kosmos..." << std::endl;
+    std::cout << "[Kosmos] Shutdown() called." << std::endl; std::cout.flush();
+#ifdef _WIN32
+    Sleep(1000);
+#else
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+#endif
     ImGui_ImplOpenGL3_Shutdown();
 #ifdef _WIN32
     ImGui_ImplWin32_Shutdown();
 #endif
     ImGui::DestroyContext();
+    std::cout << "[Kosmos] Shutdown() completed." << std::endl; std::cout.flush();
     }
 };
 
