@@ -27,6 +27,9 @@ set(GAME_SOURCES
     src/KosmosBase.cpp
     src/IniFile.cpp
     src/FileSystem.cpp
+    src/Perlin.cpp
+    src/Asteroid.cpp
+    src/AsteroidRender.cpp
 )
 
 # Set ImGui path - use local copy for cross-platform consistency

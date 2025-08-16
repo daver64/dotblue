@@ -41,15 +41,24 @@ static void HandleX11Event(void *xevent);
 #include <chrono>
 #include <thread>
 
+
 class Kosmos : public KosmosBase
 {
 private:
+    Asteroid* asteroid = nullptr;
+    AsteroidRender* asteroidRenderer = nullptr;
+    DotBlue::GLTextureAtlas* atlas = nullptr;
     DotBlue::GLCamera camera;
     bool showKosmosUI;
 
 public:
     Kosmos() { std::cerr << "[Kosmos] Constructor called." << std::endl; }
-    ~Kosmos() { std::cerr << "[Kosmos] Destructor called." << std::endl; }
+    ~Kosmos() {
+        delete asteroid;
+        delete asteroidRenderer;
+        delete atlas;
+        std::cerr << "[Kosmos] Destructor called." << std::endl;
+    }
 
     bool Initialize() override
     {
@@ -72,14 +81,21 @@ public:
         ImGui_ImplOpenGL3_Init("#version 130");
         showKosmosUI = true;
 
-        // Configure camera for a basic 3D view
-        camera.setPosition(glm::dvec3(0.0, 0.0, 5.0));
+        // Create asteroid at world origin
+        asteroid = new Asteroid(8, 8, 8, 42); // 8x8x8 chunks (128^3 voxels), seed=42
+
+        // Place camera at (0,0,-32) looking at center (0,0,0)
+        camera.setPosition(glm::dvec3(0.0, 0.0, -32.0));
         camera.setTarget(glm::dvec3(0.0, 0.0, 0.0));
         camera.setUp(glm::dvec3(0.0, 1.0, 0.0));
         camera.setFOV(60.0);
-        camera.setAspect(16.0 / 9.0); // TODO: Query actual window size
+        camera.setAspect(16.0 / 9.0);
         camera.setNearFar(0.1, 1000.0);
 
+        // Load texture atlas (mc.png, 16x16 tiles)
+        atlas = new DotBlue::GLTextureAtlas("mc.png", 16, 16);
+
+        // AsteroidRender is just a static class, no need to instantiate
         return true;
     }
 
@@ -94,11 +110,16 @@ public:
         glClearColor(0.1f, 0.1f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Set up depth test for 3D
         glEnable(GL_DEPTH_TEST);
-        // (Future: set up shaders, pass camera.getViewMatrix() and camera.getProjectionMatrix())
 
-        RenderUI();
+        // Render asteroid with texture atlas and lighting
+        glm::dmat4 view = camera.getViewMatrix();
+        glm::dmat4 proj = glm::perspective(glm::radians(camera.getFOV()), camera.getAspect(), camera.getNear(), camera.getFar());
+        glm::dmat4 viewProj = proj * view;
+        glm::vec3 lightDir = glm::normalize(glm::vec3(1.0f, 1.0f, 1.0f));
+        AsteroidRender::render(*asteroid, *atlas, viewProj, lightDir);
+
+       // RenderUI();
     }
 
     void RenderUI()
@@ -117,7 +138,7 @@ public:
         if (showKosmosUI)
         {
             ImGui::Begin("Kosmos UI", &showKosmosUI);
-            ImGui::Text("3D camera configured. Ready for scene rendering.");
+            ImGui::Text("Asteroid at (0,0,0), camera at (0,0,-32)");
             ImGui::End();
         }
 

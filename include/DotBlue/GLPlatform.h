@@ -114,7 +114,7 @@ namespace DotBlue
         DOTBLUE_API bool loadFromFiles(const std::string &vertexPath, const std::string &fragmentPath);
         DOTBLUE_API void bind() const;
         DOTBLUE_API void unbind() const;
-        unsigned int getProgram() const { return programID; }
+        DOTBLUE_API unsigned int getProgram() const { return programID; }
         
         // Uniform setters
         DOTBLUE_API void setFloat(const std::string &name, float value) const;
@@ -138,18 +138,18 @@ namespace DotBlue
     class GLTextureAtlas
     {
     public:
-        GLTextureAtlas(const std::string &pngPath, int imgWidth, int imgHeight);
-        ~GLTextureAtlas();
+        DOTBLUE_API GLTextureAtlas(const std::string &pngPath, int imgWidth, int imgHeight);
+        DOTBLUE_API ~GLTextureAtlas();
 
-        void select(int index);                                   // Select image by index (0-based, left-to-right, top-to-bottom)
-        void bind() const;                                        // Bind the atlas texture
-        void draw_quad(float x, float y, float w, float h) const; // Draw selected image at (x, y) with size (w, h)
+        DOTBLUE_API void select(int index);                                   // Select image by index (0-based, left-to-right, top-to-bottom)
+        DOTBLUE_API void bind() const;                                        // Bind the atlas texture
+        DOTBLUE_API void draw_quad(float x, float y, float w, float h) const; // Draw selected image at (x, y) with size (w, h)
 
-        int getImageCount() const { return rows * cols; }
-        unsigned int getTextureID() const { return textureID; }
+        DOTBLUE_API int getImageCount() const { return rows * cols; }
+        DOTBLUE_API unsigned int getTextureID() const { return textureID; }
         
         // Get UV coordinates for selected image
-        void getSelectedUVs(float& u0_out, float& v0_out, float& u1_out, float& v1_out) const {
+        DOTBLUE_API void getSelectedUVs(float& u0_out, float& v0_out, float& u1_out, float& v1_out) const {
             u0_out = u0; v0_out = v0; u1_out = u1; v1_out = v1;
         } 
     private:
