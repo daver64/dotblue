@@ -13,7 +13,7 @@ void Stop()
     if (g_running_flag)
     {
         *g_running_flag = false;
-    std::cerr << "[Stop] g_running_flag set to false" << std::endl;
+        std::cerr << "[Stop] g_running_flag set to false" << std::endl;
     }
 }
 
@@ -90,7 +90,7 @@ public:
 
     void Render() override
     {
-    // ...removed debug logging...
+        // ...removed debug logging...
         // Minimal implementation to satisfy abstract base class
     }
 
@@ -139,7 +139,7 @@ public:
 
     void Update(float deltaTime) override
     {
-    // ...removed debug logging...
+        // ...removed debug logging...
         // ...existing code...
         // --- Mouse look (yaw/pitch) and camera collision ---
         double speed = 40.0 * deltaTime;
@@ -471,7 +471,8 @@ static long HandleWindowMessage(void *hwnd, unsigned int msg, unsigned long long
     LPARAM lp = static_cast<LPARAM>(lParam);
 
     // Handle quit messages
-    if (uMsg == 0x0010 /* WM_CLOSE */ || uMsg == 0x0002 /* WM_DESTROY */) {
+    if (uMsg == 0x0010 /* WM_CLOSE */ || uMsg == 0x0002 /* WM_DESTROY */)
+    {
         Stop();
     }
 

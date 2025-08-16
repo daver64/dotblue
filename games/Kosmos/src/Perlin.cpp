@@ -2,7 +2,8 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
-PerlinNoise::PerlinNoise(uint32_t seed) {
+PerlinNoise::PerlinNoise(uint32_t seed)
+{
     p.resize(256);
     std::iota(p.begin(), p.end(), 0);
     std::default_random_engine engine(seed);
@@ -10,30 +11,36 @@ PerlinNoise::PerlinNoise(uint32_t seed) {
     p.insert(p.end(), p.begin(), p.end());
 }
 
-float PerlinNoise::fade(float t) {
+float PerlinNoise::fade(float t)
+{
     return t * t * t * (t * (t * 6 - 15) + 10);
 }
 
-float PerlinNoise::lerp(float a, float b, float t) {
+float PerlinNoise::lerp(float a, float b, float t)
+{
     return a + t * (b - a);
 }
 
-float PerlinNoise::grad(int hash, float x) {
+float PerlinNoise::grad(int hash, float x)
+{
     return (hash & 1) ? x : -x;
 }
 
-float PerlinNoise::grad(int hash, float x, float y) {
+float PerlinNoise::grad(int hash, float x, float y)
+{
     return ((hash & 1) ? x : -x) + ((hash & 2) ? y : -y);
 }
 
-float PerlinNoise::grad(int hash, float x, float y, float z) {
+float PerlinNoise::grad(int hash, float x, float y, float z)
+{
     int h = hash & 15;
     float u = h < 8 ? x : y;
     float v = h < 4 ? y : (h == 12 || h == 14 ? x : z);
     return ((h & 1) ? -u : u) + ((h & 2) ? -v : v);
 }
 
-float PerlinNoise::grad(int hash, float x, float y, float z, float w) {
+float PerlinNoise::grad(int hash, float x, float y, float z, float w)
+{
     // Simple 4D gradient
     int h = hash & 31;
     float a = h < 24 ? x : y;
@@ -42,7 +49,8 @@ float PerlinNoise::grad(int hash, float x, float y, float z, float w) {
     return ((h & 1) ? -a : a) + ((h & 2) ? -b : b) + ((h & 4) ? -c : c);
 }
 
-float PerlinNoise::noise(float x) const {
+float PerlinNoise::noise(float x) const
+{
     int X = (int)std::floor(x) & 255;
     x -= std::floor(x);
     float u = fade(x);
@@ -50,7 +58,8 @@ float PerlinNoise::noise(float x) const {
     return lerp(grad(a, x), grad(b, x - 1), u);
 }
 
-float PerlinNoise::noise(float x, float y) const {
+float PerlinNoise::noise(float x, float y) const
+{
     int X = (int)std::floor(x) & 255;
     int Y = (int)std::floor(y) & 255;
     x -= std::floor(x);
@@ -64,7 +73,8 @@ float PerlinNoise::noise(float x, float y) const {
         v);
 }
 
-float PerlinNoise::noise(float x, float y, float z) const {
+float PerlinNoise::noise(float x, float y, float z) const
+{
     int X = (int)std::floor(x) & 255;
     int Y = (int)std::floor(y) & 255;
     int Z = (int)std::floor(z) & 255;
@@ -92,7 +102,8 @@ float PerlinNoise::noise(float x, float y, float z) const {
         w);
 }
 
-float PerlinNoise::noise(float x, float y, float z, float w) const {
+float PerlinNoise::noise(float x, float y, float z, float w) const
+{
     // 4D Perlin noise (simple extension)
     int X = (int)std::floor(x) & 255;
     int Y = (int)std::floor(y) & 255;

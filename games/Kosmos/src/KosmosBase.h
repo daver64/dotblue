@@ -1,21 +1,25 @@
-
+#pragma once
 #include <vector>
 #include <memory>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "DotBlue/GLPlatform.h"
 
+
+
+#include <DotBlue/DotBlue.h>
+#include <atomic>
+#include <string>
+#include <map>
+#include <vector>
+#include <cstdint>
+#include <random>
+
 struct Mesh
 {
     std::vector<float> vertices;
     std::vector<uint16_t> indices;
 };
-
-// #include <vector>
-// #include <memory>
-// #include <glm/glm.hpp>
-// #include <glm/gtc/matrix_transform.hpp>
-// #include "DotBlue/GLPlatform.h"
 
 class Camera
 {
@@ -26,10 +30,6 @@ public:
     void updateFromInput(float deltaTime);
     glm::dmat4 getViewMatrix() const;
 };
-#include <vector>
-#include <cstdint>
-#include <random>
-
 class PerlinNoise
 {
 public:
@@ -49,10 +49,6 @@ private:
     static float grad(int hash, float x, float y, float z);
     static float grad(int hash, float x, float y, float z, float w);
 };
-#pragma once
-#include <DotBlue/DotBlue.h>
-#include <atomic>
-
 // Forward declarations
 namespace DotBlue
 {
@@ -91,8 +87,7 @@ protected:
 };
 
 // INI file handler for config
-#include <string>
-#include <map>
+
 
 class IniFile
 {
@@ -162,7 +157,7 @@ public:
 };
 
 // FileSystem utility for config directory
-#include <string>
+//#include <string>
 class FileSystem
 {
 public:
