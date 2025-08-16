@@ -1,7 +1,12 @@
+
+#include <atomic>
 #define SDL_MAIN_HANDLED // Prevent SDL from redefining main
 #include "KosmosBase.h"
 #include "DotBlue/DotBlue.h"
 #include "DotBlue/GLPlatform.h"
+// Global pointer for mesh UVs (must be after GLPlatform.h)
+DotBlue::GLTextureAtlas* g_atlas_for_mesh = nullptr;
+
 
 // Include ImGui headers
 #include "imgui.h"
@@ -50,7 +55,9 @@ private:
     DotBlue::GLCamera camera;
     bool showKosmosUI;
 
+#define KOSMOS_RENDER_IMPLEMENTED
 public:
+    double camYaw = 0.0, camPitch = 0.0;
     Kosmos() { std::cerr << "[Kosmos] Constructor called." << std::endl; }
     ~Kosmos()
     {
@@ -58,6 +65,11 @@ public:
         delete asteroidRenderer;
         delete atlas;
         std::cerr << "[Kosmos] Destructor called." << std::endl;
+    }
+
+    void Render() override
+    {
+        // Minimal implementation to satisfy abstract base class
     }
 
     bool Initialize() override
@@ -81,19 +93,24 @@ public:
         ImGui_ImplOpenGL3_Init("#version 130");
         showKosmosUI = true;
 
-        // Create asteroid at world origin
-        asteroid = new Asteroid(8, 8, 8, 42); // 8x8x8 chunks (128^3 voxels), seed=42
 
-        // Place camera at (0,0,-80) looking at center (0,0,0) for a better view
-        camera.setPosition(glm::dvec3(0.0, 0.0, -80.0));
-        camera.setTarget(glm::dvec3(0.0, 0.0, 0.0));
-        camera.setUp(glm::dvec3(0.0, 1.0, 0.0));
-        camera.setFOV(70.0); // Slightly wider FOV
-        camera.setAspect(16.0 / 9.0);
-        camera.setNearFar(0.1, 1000.0);
+    // Load texture atlas (mc.png, 16x16 tiles)
+    atlas = new DotBlue::GLTextureAtlas("../assets/mc.png", 16, 16);
+    g_atlas_for_mesh = atlas;
+    atlas->select(0); // Select the first tile for all faces
 
-        // Load texture atlas (mc.png, 16x16 tiles)
-        atlas = new DotBlue::GLTextureAtlas("../assets/mc.png", 16, 16);
+    // Create asteroid at world origin
+    asteroid = new Asteroid(8, 8, 8, 42); // 8x8x8 chunks (128^3 voxels), seed=42
+
+    // Place camera at (0,0,-80) looking at center (0,0,0) for a better view
+    camera.setPosition(glm::dvec3(0.0, 0.0, -80.0));
+    camYaw = 0.0;
+    camPitch = 0.0;
+    camera.setTarget(glm::dvec3(0.0, 0.0, 0.0));
+    camera.setUp(glm::dvec3(0.0, 1.0, 0.0));
+    camera.setFOV(70.0); // Slightly wider FOV
+    camera.setAspect(16.0 / 9.0);
+    camera.setNearFar(0.1, 1000.0);
 
         // AsteroidRender is just a static class, no need to instantiate
         return true;
@@ -101,78 +118,143 @@ public:
 
     void Update(float deltaTime) override
     {
-        // Basic camera movement: WASD/arrow keys
+        // --- Mouse look (yaw/pitch) and camera collision ---
         double speed = 40.0 * deltaTime;
-        glm::dvec3 forward = glm::normalize(camera.getTarget() - camera.getPosition());
-        glm::dvec3 right = glm::normalize(glm::cross(forward, camera.getUp()));
-        glm::dvec3 up = camera.getUp();
-        bool moved = false;
+        double mouseSensitivity = 0.15; // Adjust as needed
+        // Get mouse delta (SDL)
+        int mouseDX = 0, mouseDY = 0;
 #ifdef _WIN32
+    auto canMoveTo = [&](const glm::dvec3 &pos)
+    {
+        int wx = int(std::round(pos.x));
+        int wy = int(std::round(pos.y));
+        int wz = int(std::round(pos.z));
+        Voxel *v = asteroid->getVoxel(wx, wy, wz);
+        return (!v || v->type == VoxelType::Empty);
+    };
+#endif
+    // --- Mouse input and clamp to center ---
+#ifdef _WIN32
+        // Get window handle and size
+        HWND hwnd = static_cast<HWND>(DotBlue::GetWindowHandle());
+        if (GetForegroundWindow() == hwnd)
+        { // Only clamp if focused
+            RECT rect;
+            GetClientRect(hwnd, &rect);
+            POINT center;
+            center.x = (rect.right - rect.left) / 2;
+            center.y = (rect.bottom - rect.top) / 2;
+            // Convert client to screen coordinates
+            POINT screenCenter = center;
+            ClientToScreen(hwnd, &screenCenter);
+            static bool firstMouse = true;
+            static POINT lastMouse = {0, 0};
+            POINT mousePos;
+            GetCursorPos(&mousePos);
+            if (firstMouse)
+            {
+                lastMouse = screenCenter;
+                SetCursorPos(screenCenter.x, screenCenter.y);
+                firstMouse = false;
+            }
+            mouseDX = mousePos.x - lastMouse.x;
+            mouseDY = mousePos.y - lastMouse.y;
+            lastMouse = screenCenter;
+            // Clamp mouse to center every frame
+            SetCursorPos(screenCenter.x, screenCenter.y);
+        }
+        else
+        {
+            mouseDX = 0;
+            mouseDY = 0;
+        }
+// #endif (removed extra #endif to fix preprocessor error)
+        // Quit on Escape
+#ifdef _WIN32
+        if (GetAsyncKeyState(VK_ESCAPE) & 0x8000)
+        {
+            Stop();
+            return;
+        }
+#endif
+        camYaw += mouseDX * mouseSensitivity;
+        camPitch -= mouseDY * mouseSensitivity;
+        // Clamp pitch to avoid flipping
+        if (camPitch > 89.0)
+            camPitch = 89.0;
+        if (camPitch < -89.0)
+            camPitch = -89.0;
+        // Calculate forward vector from yaw/pitch
+        double yawRad = glm::radians(camYaw);
+        double pitchRad = glm::radians(camPitch);
+        glm::dvec3 forward = glm::dvec3(
+            cos(pitchRad) * cos(yawRad),
+            sin(pitchRad),
+            cos(pitchRad) * sin(yawRad));
+        glm::dvec3 worldUp = glm::dvec3(0, 1, 0);
+        glm::dvec3 right = glm::normalize(glm::cross(forward, worldUp));
+
+    bool moved = false;
+        glm::dvec3 camPos = camera.getPosition();
         if (GetAsyncKeyState('W') & 0x8000)
         {
-            camera.setPosition(camera.getPosition() + forward * speed);
-            camera.setTarget(camera.getTarget() + forward * speed);
-            moved = true;
+            glm::dvec3 newPos = camPos + forward * speed;
+            if (canMoveTo(newPos)) {
+                camPos = newPos;
+                moved = true;
+            }
         }
         if (GetAsyncKeyState('S') & 0x8000)
         {
-            camera.setPosition(camera.getPosition() - forward * speed);
-            camera.setTarget(camera.getTarget() - forward * speed);
-            moved = true;
+            glm::dvec3 newPos = camPos - forward * speed;
+            if (canMoveTo(newPos)) {
+                camPos = newPos;
+                moved = true;
+            }
         }
         if (GetAsyncKeyState('A') & 0x8000)
         {
-            camera.setPosition(camera.getPosition() - right * speed);
-            camera.setTarget(camera.getTarget() - right * speed);
-            moved = true;
+            glm::dvec3 newPos = camPos - right * speed;
+            if (canMoveTo(newPos)) {
+                camPos = newPos;
+                moved = true;
+            }
         }
         if (GetAsyncKeyState('D') & 0x8000)
         {
-            camera.setPosition(camera.getPosition() + right * speed);
-            camera.setTarget(camera.getTarget() + right * speed);
-            moved = true;
+            glm::dvec3 newPos = camPos + right * speed;
+            if (canMoveTo(newPos)) {
+                camPos = newPos;
+                moved = true;
+            }
         }
         if (GetAsyncKeyState(VK_UP) & 0x8000)
         {
-            camera.setPosition(camera.getPosition() + up * speed);
-            camera.setTarget(camera.getTarget() + up * speed);
-            moved = true;
+            glm::dvec3 newPos = camPos + worldUp * speed;
+            if (canMoveTo(newPos)) {
+                camPos = newPos;
+                moved = true;
+            }
         }
         if (GetAsyncKeyState(VK_DOWN) & 0x8000)
         {
-            camera.setPosition(camera.getPosition() - up * speed);
-            camera.setTarget(camera.getTarget() - up * speed);
-            moved = true;
+            glm::dvec3 newPos = camPos - worldUp * speed;
+            if (canMoveTo(newPos)) {
+                camPos = newPos;
+                moved = true;
+            }
         }
-        if (GetAsyncKeyState(VK_LEFT) & 0x8000)
-        {
-            // Orbit left
-            glm::dmat4 rot = glm::rotate(glm::dmat4(1.0), glm::radians(1.5), up);
-            glm::dvec3 dir = camera.getTarget() - camera.getPosition();
-            dir = glm::vec3(rot * glm::dvec4(dir, 0.0));
-            camera.setTarget(camera.getPosition() + dir);
-            moved = true;
-        }
-        if (GetAsyncKeyState(VK_RIGHT) & 0x8000)
-        {
-            // Orbit right
-            glm::dmat4 rot = glm::rotate(glm::dmat4(1.0), glm::radians(-1.5), up);
-            glm::dvec3 dir = camera.getTarget() - camera.getPosition();
-            dir = glm::vec3(rot * glm::dvec4(dir, 0.0));
-            camera.setTarget(camera.getPosition() + dir);
-            moved = true;
+        if (moved) {
+            camera.setPosition(camPos);
         }
 #endif
-        // if (moved) {
-        //     // Optionally print camera position for debugging
-        //     std::cerr << "[Camera] Pos: " << camera.getPosition().x << ", " << camera.getPosition().y << ", " << camera.getPosition().z << std::endl;
-        // }
-    }
-
-    void Render() override
-    {
-        // Clear the screen for 3D rendering
-        glClearColor(0.1f, 0.1f, 0.3f, 1.0f);
+        // After movement, always recalculate forward and set target
+        forward = glm::dvec3(
+            cos(pitchRad) * cos(yawRad),
+            sin(pitchRad),
+            cos(pitchRad) * sin(yawRad));
+        camera.setTarget(camera.getPosition() + forward);
+        camera.setUp(worldUp);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glEnable(GL_DEPTH_TEST);

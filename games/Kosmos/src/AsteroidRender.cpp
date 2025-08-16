@@ -1,12 +1,55 @@
-// Simple shader sources for lit textured voxels
+// ...existing code...
 #include "KosmosBase.h"
-#include "DotBlue/DotBlue.h"
-#include "DotBlue/GLPlatform.h"
 #include <GL/glew.h>
 #include <glm/gtc/type_ptr.hpp>
-#include <string>
-#include <vector>
 #include <iostream>
+#include <cstdio>
+struct GLMesh {
+    GLuint vao = 0, vbo = 0, ebo = 0;
+    size_t indexCount = 0;
+    void upload(const Mesh &mesh) {
+        const char* glVer = (const char*)glGetString(GL_VERSION);
+        if (!glVer) {
+            std::cerr << "[GLMesh::upload] OpenGL context not current or not initialized!" << std::endl;
+            indexCount = 0;
+            return;
+        }
+        if (mesh.vertices.empty() || mesh.indices.empty()) {
+            indexCount = 0;
+            return;
+        }
+        if (!vao) glGenVertexArrays(1, &vao);
+        if (!vbo) glGenBuffers(1, &vbo);
+        if (!ebo) glGenBuffers(1, &ebo);
+        if (vao == 0 || vbo == 0 || ebo == 0) {
+            std::cerr << "[GLMesh::upload] Failed to create VAO/VBO/EBO! vao=" << vao << " vbo=" << vbo << " ebo=" << ebo << std::endl;
+            indexCount = 0;
+            return;
+        }
+        glBindVertexArray(vao);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, mesh.vertices.size() * sizeof(float), mesh.vertices.data(), GL_STATIC_DRAW);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size() * sizeof(uint16_t), mesh.indices.data(), GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0); // pos
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(1); // normal
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+        glEnableVertexAttribArray(2); // uv
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+        indexCount = mesh.indices.size();
+    glBindVertexArray(0); // Unbind VAO to prevent state leakage
+    }
+    void destroy() {
+        if (vbo) { glDeleteBuffers(1, &vbo); vbo = 0; }
+        if (ebo) { glDeleteBuffers(1, &ebo); ebo = 0; }
+        if (vao) { glDeleteVertexArrays(1, &vao); vao = 0; }
+        indexCount = 0;
+    }
+    ~GLMesh() { destroy(); }
+};
+
+// Minimal shader sources
 static const char *voxelVertShader = R"(
 #version 130
 uniform mat4 u_mvp;
@@ -21,7 +64,6 @@ void main() {
     v_normal = a_normal;
     v_uv = a_uv;
 }
-
 )";
 static const char *voxelFragShader = R"(
 #version 130
@@ -39,118 +81,52 @@ void main() {
     fragColor = vec4(tex.rgb * lighting, tex.a);
 }
 )";
-// Helper: Upload mesh to VBO/VAO
-struct GLMesh
-{
-    GLuint vao = 0, vbo = 0, ebo = 0;
-    size_t indexCount = 0;
-    void upload(const Mesh &mesh)
-    {
-        if (mesh.vertices.empty() || mesh.indices.empty())
-        {
-            // std::cerr << "[GLMesh] Skipping upload: empty mesh." << std::endl;
-            indexCount = 0;
-            return;
-        }
-        if (!vao)
-            glGenVertexArrays(1, &vao);
-        if (!vbo)
-            glGenBuffers(1, &vbo);
-        if (!ebo)
-            glGenBuffers(1, &ebo);
-        glBindVertexArray(vao);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, mesh.vertices.size() * sizeof(float), mesh.vertices.data(), GL_STATIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size() * sizeof(uint32_t), mesh.indices.data(), GL_STATIC_DRAW);
-    // Set up vertex attributes: pos(3), normal(3), uv(2) = 8 floats per vertex
-    glEnableVertexAttribArray(0); // a_pos
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(1); // a_normal
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(2); // a_uv
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    indexCount = mesh.indices.size();
-    // std::cerr << "[GLMesh] Uploaded mesh: " << (mesh.vertices.size() / 8) << " verts, " << mesh.indices.size() << " indices." << std::endl;
-    }
-};
 
-// Implementation of AsteroidRender::render
-void AsteroidRender::render(const Asteroid& asteroid, const DotBlue::GLTextureAtlas& atlas, const glm::dmat4& viewProj, const glm::vec3& lightDir)
-{
-    // ...existing code...
-    glEnable(GL_CULL_FACE);
-    glFrontFace(GL_CCW);
-    glCullFace(GL_BACK);
-
-    static bool glInited = false;
-    static DotBlue::GLShader voxelShader;
+void AsteroidRender::render(const Asteroid &asteroid, const DotBlue::GLTextureAtlas &atlas, const glm::dmat4 &viewProj, const glm::vec3 &lightDir) {
     static std::vector<GLMesh> glMeshes;
-
-    if (!glInited)
-    {
-        // Use DotBlue GLShader to load from source strings
-        bool loaded = voxelShader.load(voxelVertShader, voxelFragShader);
-        if (!loaded)
-        {
-            std::cerr << "[AsteroidRender] ERROR: Shader failed to load!" << std::endl;
+    static DotBlue::GLShader shader;
+    static bool shaderLoaded = false;
+    if (!shaderLoaded) {
+        shaderLoaded = shader.load(voxelVertShader, voxelFragShader);
+        if (!shaderLoaded) {
+            std::cerr << "[AsteroidRender] Shader failed to load!" << std::endl;
             return;
         }
-        glInited = true;
     }
-
-    // Upload all chunk meshes
-    glMeshes.clear();
-    static bool printedDebug = false;
-    for (const auto &chunkPtr : asteroid.chunks)
-    {
-        GLMesh glmesh;
-        if (chunkPtr->mesh) {
-            glmesh.upload(*chunkPtr->mesh);
-            // Print debug info for the first non-empty mesh
-            if (!printedDebug && !chunkPtr->mesh->vertices.empty() && !chunkPtr->mesh->indices.empty()) {
-                printedDebug = true;
-                size_t vcount = chunkPtr->mesh->vertices.size() / 8;
-                size_t icount = chunkPtr->mesh->indices.size();
-                printf("[AsteroidRender] Debug: First mesh: %zu vertices, %zu indices\n", vcount, icount);
-                for (size_t i = 0; i < std::min(vcount, size_t(8)); ++i) {
-                    float x = chunkPtr->mesh->vertices[i*8+0];
-                    float y = chunkPtr->mesh->vertices[i*8+1];
-                    float z = chunkPtr->mesh->vertices[i*8+2];
-                    float nx = chunkPtr->mesh->vertices[i*8+3];
-                    float ny = chunkPtr->mesh->vertices[i*8+4];
-                    float nz = chunkPtr->mesh->vertices[i*8+5];
-                    float u = chunkPtr->mesh->vertices[i*8+6];
-                    float v = chunkPtr->mesh->vertices[i*8+7];
-                    printf("  Vertex %zu: pos(%.2f, %.2f, %.2f) normal(%.2f, %.2f, %.2f) uv(%.2f, %.2f)\n", i, x, y, z, nx, ny, nz, u, v);
-                }
-                for (size_t i = 0; i < std::min(icount, size_t(12)); i += 3) {
-                    printf("  Triangle %zu: %u, %u, %u\n", i/3, chunkPtr->mesh->indices[i], chunkPtr->mesh->indices[i+1], chunkPtr->mesh->indices[i+2]);
-                }
-            }
+    if (glMeshes.size() != asteroid.chunks.size()) {
+        for (auto &m : glMeshes) m.destroy();
+        glMeshes.clear();
+        glMeshes.resize(asteroid.chunks.size());
+        for (size_t i = 0; i < asteroid.chunks.size(); ++i) {
+            if (asteroid.chunks[i]->mesh) glMeshes[i].upload(*asteroid.chunks[i]->mesh);
         }
-        glMeshes.push_back(glmesh);
     }
-
-    voxelShader.bind();
-    voxelShader.setMat4("u_mvp", glm::mat4(viewProj));
-    voxelShader.setVec3("u_lightDir", lightDir.x, lightDir.y, lightDir.z);
-    voxelShader.setFloat("u_ambient", 0.3125f);
-        atlas.bind();
-    voxelShader.setInt("u_tex", 0);
-
-    // Draw all chunk meshes
-    for (size_t chunkIdx = 0; chunkIdx < asteroid.chunks.size(); ++chunkIdx)
-    {
-        const Chunk &chunk = *asteroid.chunks[chunkIdx];
-        GLMesh &glmesh = glMeshes[chunkIdx];
-        if (glmesh.indexCount == 0)
-            continue;
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    shader.bind();
+    shader.setMat4("u_mvp", glm::mat4(viewProj));
+    shader.setVec3("u_lightDir", lightDir.x, lightDir.y, lightDir.z);
+    shader.setFloat("u_ambient", 0.45f);
+    atlas.bind();
+    shader.setInt("u_tex", 0);
+    for (size_t i = 0; i < asteroid.chunks.size(); ++i) {
+        const Chunk &chunk = *asteroid.chunks[i];
+        const GLMesh &mesh = glMeshes[i];
+    if (mesh.indexCount == 0 || mesh.vao == 0 || mesh.vbo == 0 || mesh.ebo == 0) continue;
         float offsetX = float(chunk.chunkX * CHUNK_SIZE);
         float offsetY = float(chunk.chunkY * CHUNK_SIZE);
         float offsetZ = float(chunk.chunkZ * CHUNK_SIZE);
-        voxelShader.setVec3("u_chunkOffset", offsetX, offsetY, offsetZ);
-        glBindVertexArray(glmesh.vao);
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(glmesh.indexCount), GL_UNSIGNED_INT, 0);
+    shader.setVec3("u_chunkOffset", offsetX, offsetY, offsetZ);
+        if (i == 11) {
+            const Chunk &debugChunk = *asteroid.chunks[i];
+            if (debugChunk.mesh) {
+            }
+        }
+        if (mesh.vao == 0 || mesh.vbo == 0 || mesh.ebo == 0) {
+            continue;
+        }
+        glBindVertexArray(mesh.vao);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.indexCount), GL_UNSIGNED_SHORT, 0);
     }
 }

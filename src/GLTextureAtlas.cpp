@@ -42,6 +42,8 @@ namespace DotBlue
 
         cols = atlasWidth / imgWidth;
         rows = atlasHeight / imgHeight;
+        printf("[GLTextureAtlas] atlasWidth=%d atlasHeight=%d imgWidth=%d imgHeight=%d cols=%d rows=%d\n",
+            atlasWidth, atlasHeight, imgWidth, imgHeight, cols, rows);
         select(0); // Default to first image
     }
 
@@ -53,13 +55,13 @@ namespace DotBlue
 
     void GLTextureAtlas::select(int index)
     {
-        selectedIndex = index;
-        int col = index % cols;
-        int row = index / cols;
-        u0 = (float)(col * imgWidth) / atlasWidth;
-        v0 = (float)(row * imgHeight) / atlasHeight;
-        u1 = (float)((col + 1) * imgWidth) / atlasWidth;
-        v1 = (float)((row + 1) * imgHeight) / atlasHeight;
+    selectedIndex = index;
+    int col = index % cols;
+    int row = index / cols;
+    u0 = (float)(col * imgWidth) / atlasWidth;
+    v0 = (float)(row * imgHeight) / atlasHeight;
+    u1 = (float)((col + 1) * imgWidth) / atlasWidth;
+    v1 = (float)((row + 1) * imgHeight) / atlasHeight;
     }
 
     void GLTextureAtlas::bind() const
