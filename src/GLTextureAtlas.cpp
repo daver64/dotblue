@@ -28,44 +28,49 @@
 #include <string>
 #include "DotBlue/stb_image.h"
 
-
-namespace DotBlue {
-
-GLTextureAtlas::GLTextureAtlas(const std::string& pngPath, int imgW, int imgH)
-    : textureID(0), imgWidth(imgW), imgHeight(imgH), selectedIndex(0)
+namespace DotBlue
 {
-    // Load PNG and get atlas size
-    textureID = LoadPNGTexture(pngPath);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &atlasWidth);
-    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &atlasHeight);
 
-    cols = atlasWidth / imgWidth;
-    rows = atlasHeight / imgHeight;
-    select(0); // Default to first image
-}
+    GLTextureAtlas::GLTextureAtlas(const std::string &pngPath, int imgW, int imgH)
+        : textureID(0), imgWidth(imgW), imgHeight(imgH), selectedIndex(0)
+    {
+        // Load PNG and get atlas size
+        textureID = LoadPNGTexture(pngPath);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &atlasWidth);
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &atlasHeight);
 
-GLTextureAtlas::~GLTextureAtlas() {
-    if (textureID) glDeleteTextures(1, &textureID);
-}
+        cols = atlasWidth / imgWidth;
+        rows = atlasHeight / imgHeight;
+        select(0); // Default to first image
+    }
 
-void GLTextureAtlas::select(int index) {
-    selectedIndex = index;
-    int col = index % cols;
-    int row = index / cols;
-    u0 = (float)(col * imgWidth) / atlasWidth;
-    v0 = (float)(row * imgHeight) / atlasHeight;
-    u1 = (float)((col + 1) * imgWidth) / atlasWidth;
-    v1 = (float)((row + 1) * imgHeight) / atlasHeight;
-}
+    GLTextureAtlas::~GLTextureAtlas()
+    {
+        if (textureID)
+            glDeleteTextures(1, &textureID);
+    }
 
-void GLTextureAtlas::bind() const {
-    glBindTexture(GL_TEXTURE_2D, textureID);
-}
+    void GLTextureAtlas::select(int index)
+    {
+        selectedIndex = index;
+        int col = index % cols;
+        int row = index / cols;
+        u0 = (float)(col * imgWidth) / atlasWidth;
+        v0 = (float)(row * imgHeight) / atlasHeight;
+        u1 = (float)((col + 1) * imgWidth) / atlasWidth;
+        v1 = (float)((row + 1) * imgHeight) / atlasHeight;
+    }
 
-void GLTextureAtlas::draw_quad(float x, float y, float w, float h) const {
-    // Use modern shader-based rendering instead of legacy immediate mode
-    TexturedQuadShaderUV(textureID, x, y, x + w, y + h, u0, v0, u1, v1);
-}
+    void GLTextureAtlas::bind() const
+    {
+        glBindTexture(GL_TEXTURE_2D, textureID);
+    }
+
+    void GLTextureAtlas::draw_quad(float x, float y, float w, float h) const
+    {
+        // Use modern shader-based rendering instead of legacy immediate mode
+        TexturedQuadShaderUV(textureID, x, y, x + w, y + h, u0, v0, u1, v1);
+    }
 
 }

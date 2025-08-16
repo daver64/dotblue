@@ -27,17 +27,21 @@ static DotBlue::X11EventCallback g_x11EventCallback = nullptr;
 
 namespace DotBlue
 {
- void GetRenderWindowSize(int& width, int& height) {
-    if (display && win) {
-        XWindowAttributes gwa;
-        XGetWindowAttributes(display, win, &gwa);
-        width = gwa.width;
-        height = gwa.height;
-    } else {
-        width = 800;
-        height = 600;
+    void GetRenderWindowSize(int &width, int &height)
+    {
+        if (display && win)
+        {
+            XWindowAttributes gwa;
+            XGetWindowAttributes(display, win, &gwa);
+            width = gwa.width;
+            height = gwa.height;
+        }
+        else
+        {
+            width = 800;
+            height = 600;
+        }
     }
-}   
     void SetX11EventCallback(X11EventCallback callback)
     {
         g_x11EventCallback = callback;
@@ -91,8 +95,7 @@ namespace DotBlue
             vi = glXGetVisualFromFBConfig(display, fbc[0]);
             cmap = XCreateColormap(display, root, vi->visual, AllocNone);
             swa.colormap = cmap;
-            swa.event_mask = ExposureMask | KeyPressMask | StructureNotifyMask
-                | ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
+            swa.event_mask = ExposureMask | KeyPressMask | StructureNotifyMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
             win = XCreateWindow(display, root, 0, 0, 800, 600, 0,
                                 vi->depth, InputOutput, vi->visual,
                                 CWColormap | CWEventMask, &swa);
@@ -114,8 +117,7 @@ namespace DotBlue
             }
             cmap = XCreateColormap(display, root, vi->visual, AllocNone);
             swa.colormap = cmap;
-            swa.event_mask = ExposureMask | KeyPressMask | StructureNotifyMask
-                | ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
+            swa.event_mask = ExposureMask | KeyPressMask | StructureNotifyMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
             win = XCreateWindow(display, root, 0, 0, 800, 600, 0,
                                 vi->depth, InputOutput, vi->visual,
                                 CWColormap | CWEventMask, &swa);
@@ -166,7 +168,7 @@ namespace DotBlue
                 }
             }
         }
-        
+
         // Initialize GLEW after OpenGL context is created and current
         if (glewInit() != GLEW_OK)
         {
@@ -178,7 +180,7 @@ namespace DotBlue
         {
             std::cerr << "GLEW initialized successfully" << std::endl;
         }
-        
+
         DotBlue::InitApp();
         // Main loop
         while (running)
@@ -189,20 +191,20 @@ namespace DotBlue
             {
                 XEvent xev;
                 XNextEvent(display, &xev);
-                
+
                 // Forward event to client application (for ImGui, etc.)
                 if (g_x11EventCallback)
                 {
                     g_x11EventCallback(&xev);
                 }
-                
+
                 if (xev.type == ClientMessage || xev.type == DestroyNotify)
                 {
                     running = false;
                 }
                 // Basic event handling - client applications can extend this
             }
-            //DotBlue::HandleInput(win);
+            // DotBlue::HandleInput(win);
             DotBlue::UpdateAndRender();
 
             auto frameEnd = std::chrono::high_resolution_clock::now();
@@ -250,8 +252,8 @@ namespace DotBlue
 
         // Update input system
         UpdateInput();
-        InputManager& input = GetInputManager();
-        InputBindings& bindings = GetInputBindings();
+        InputManager &input = GetInputManager();
+        InputBindings &bindings = GetInputBindings();
 
         // Call game input and update
         DotBlue::CallGameInput(input, bindings);
@@ -298,8 +300,7 @@ namespace DotBlue
             GLX_DEPTH_SIZE, 24,
             GLX_STENCIL_SIZE, 8,
             GLX_DOUBLEBUFFER, True,
-            None
-        };
+            None};
 
         GLXFBConfig *fbc = glXChooseFBConfig(display, screen, visual_attribs, &fbcount);
         if (!fbc)
@@ -329,23 +330,22 @@ namespace DotBlue
         glXMakeCurrent(display, win, legacyCtx);
 
         // Try to create modern context
-        PFNGLXCREATECONTEXTATTRIBSARBPROC glXCreateContextAttribsARB = 
-            (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddress((const GLubyte*)"glXCreateContextAttribsARB");
+        PFNGLXCREATECONTEXTATTRIBSARBPROC glXCreateContextAttribsARB =
+            (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddress((const GLubyte *)"glXCreateContextAttribsARB");
 
         modernCtx = nullptr;
         if (glXCreateContextAttribsARB)
         {
             int majorVersions[] = {4, 3, 3};
             int minorVersions[] = {4, 3, 0};
-            
+
             for (int i = 0; i < 3; i++)
             {
                 int context_attribs[] = {
                     GLX_CONTEXT_MAJOR_VERSION_ARB, majorVersions[i],
                     GLX_CONTEXT_MINOR_VERSION_ARB, minorVersions[i],
                     GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB,
-                    None
-                };
+                    None};
                 modernCtx = glXCreateContextAttribsARB(display, fbc[0], nullptr, True, context_attribs);
                 if (modernCtx)
                 {
@@ -364,14 +364,14 @@ namespace DotBlue
             running = false;
             return;
         }
-        
+
         DotBlue::InitApp();
 
         std::cout << "Starting timer-based rendering loop (Linux)..." << std::endl;
 
         // Get X11 connection file descriptor for select()
         int x11_fd = ConnectionNumber(display);
-        
+
         // Main loop with timeout-based rendering
         while (running)
         {
@@ -381,14 +381,14 @@ namespace DotBlue
             fd_set fds;
             FD_ZERO(&fds);
             FD_SET(x11_fd, &fds);
-            
+
             // Set timeout with some variation for more natural timing
             struct timeval timeout;
             timeout.tv_sec = 0;
             timeout.tv_usec = 20000; // 20ms = ~50 FPS base, allowing for natural variation
-            
+
             int result = select(x11_fd + 1, &fds, nullptr, nullptr, &timeout);
-            
+
             if (result > 0 && FD_ISSET(x11_fd, &fds))
             {
                 // Process all available X11 events
@@ -396,23 +396,23 @@ namespace DotBlue
                 {
                     XEvent xev;
                     XNextEvent(display, &xev);
-                    
+
                     // Forward event to client application (for ImGui, etc.)
                     if (g_x11EventCallback)
                     {
                         g_x11EventCallback(&xev);
                     }
-                    
+
                     if (xev.type == ClientMessage || xev.type == DestroyNotify)
                     {
                         running = false;
                         break;
                     }
-                    
+
                     // Basic event handling - client applications can extend this
                 }
             }
-            
+
             if (!running)
                 break;
 
@@ -422,7 +422,7 @@ namespace DotBlue
             // Frame timing - allow natural variation like Windows
             auto frameEnd = std::chrono::high_resolution_clock::now();
             double elapsed = std::chrono::duration<double, std::milli>(frameEnd - frameStart).count();
-            
+
             // Only sleep if we're running significantly faster than target (give some headroom)
             double minFrameTime = targetFrameTime * 0.8; // Allow some natural variation
             if (elapsed < minFrameTime)

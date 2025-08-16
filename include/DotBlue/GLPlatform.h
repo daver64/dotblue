@@ -183,7 +183,7 @@ namespace DotBlue
     DOTBLUE_API void GLEnableTextureFiltering(unsigned int textureID);
 
     // OS-agnostic window size query
-    void GetRenderWindowSize(int& width, int& height);
+    DOTBLUE_API void GetRenderWindowSize(int& width, int& height);
 
     // Modern shader-compatible drawing functions
     DOTBLUE_API void GLLineShader(float x0, float y0, float x1, float y1, float r, float g, float b);

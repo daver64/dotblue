@@ -48,12 +48,12 @@ private:
     bool showKosmosUI;
 
 public:
-    Kosmos() { std::cout << "[Kosmos] Constructor called." << std::endl; }
-    ~Kosmos() { std::cout << "[Kosmos] Destructor called." << std::endl; }
+    Kosmos() { std::cerr << "[Kosmos] Constructor called." << std::endl; }
+    ~Kosmos() { std::cerr << "[Kosmos] Destructor called." << std::endl; }
 
     bool Initialize() override
     {
-        std::cout << "Initializing Kosmos..." << std::endl;
+        std::cerr << "Initializing Kosmos..." << std::endl;
 #ifdef _WIN32
         DotBlue::SetWindowMessageCallback(HandleWindowMessage);
 #elif defined(__linux__) || defined(__FreeBSD__)
@@ -103,7 +103,8 @@ public:
 
     void RenderUI()
     {
-        int width = 800, height = 600;
+        int width = 0, height = 0;
+        DotBlue::GetRenderWindowSize(width, height);
         ImGuiIO &io = ImGui::GetIO();
         io.DisplaySize.x = (float)width;
         io.DisplaySize.y = (float)height;
@@ -131,15 +132,15 @@ public:
 
     void Shutdown() override
     {
-        std::cout << "[Kosmos] Shutdown() called." << std::endl;
-        std::cout.flush();
+        std::cerr << "[Kosmos] Shutdown() called." << std::endl;
+        std::cerr.flush();
         ImGui_ImplOpenGL3_Shutdown();
 #ifdef _WIN32
         ImGui_ImplWin32_Shutdown();
 #endif
         ImGui::DestroyContext();
-        std::cout << "[Kosmos] Shutdown() completed." << std::endl;
-        std::cout.flush();
+        std::cerr << "[Kosmos] Shutdown() completed." << std::endl;
+        std::cerr.flush();
     }
 };
 
