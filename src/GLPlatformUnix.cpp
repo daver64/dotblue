@@ -14,13 +14,24 @@
 #include <iostream>
 #include <string>
 #include <thread>
+
+
+// ...existing code...
+
 #include <DotBlue/GLPlatform.h>
 #include <DotBlue/Input.h>
+
 
 // Global X11 variables (accessible by ThreadedRenderer.cpp)
 Display *display = nullptr;
 Window win = 0;
 GLXContext modernCtx = nullptr;
+
+// Expose X11 Display and Window for use in game code (after globals)
+namespace DotBlue {
+    Display* GetX11Display() { return display; }
+    Window GetX11Window() { return win; }
+}
 
 // X11 event callback for client applications (like ImGui)
 static DotBlue::X11EventCallback g_x11EventCallback = nullptr;
@@ -412,6 +423,7 @@ namespace DotBlue
                     // Basic event handling - client applications can extend this
                 }
             }
+
 
             if (!running)
                 break;

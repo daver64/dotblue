@@ -32,6 +32,7 @@
 
 #if defined(__linux__) || defined(__FreeBSD__)
 #include <SDL2/SDL.h>
+#include <X11/Xlib.h>
 #endif
 #ifndef GL_CLAMP_TO_EDGE
 #define GL_CLAMP_TO_EDGE 0x812F
@@ -238,9 +239,12 @@ namespace DotBlue
 #endif
 
     // X11 event callback system (for Linux games that need to handle X11 events like ImGui)
+
 #if defined(__linux__) || defined(__FreeBSD__)
     typedef void (*X11EventCallback)(void* xevent);
     DOTBLUE_API void SetX11EventCallback(X11EventCallback callback);
+    DOTBLUE_API Display* GetX11Display();
+    DOTBLUE_API Window GetX11Window();
 #endif
 
 } // namespace DotBlue

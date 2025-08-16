@@ -64,12 +64,14 @@ target_include_directories(Kosmos PRIVATE ${DOTBLUE_DIR}/include)
 target_include_directories(Kosmos PRIVATE ${IMGUI_DIR})
 target_include_directories(Kosmos PRIVATE ${IMGUI_DIR}/backends)
 
-# Include GLM headers (Windows only)
+# Include SDL2 headers (all platforms)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(SDL2 REQUIRED sdl2)
+target_include_directories(Kosmos PRIVATE ${SDL2_INCLUDE_DIRS})
 if(WIN32)
     target_include_directories(Kosmos PRIVATE ${GLM_ROOT})
     target_include_directories(Kosmos PRIVATE ${SDL2_ROOT}/include)
     target_include_directories(Kosmos PRIVATE ${SDL2_MIXER_ROOT}/include)
-    
     # Add GLEW include directory
     target_include_directories(Kosmos PRIVATE "C:/Users/daver/LocalApps/glew-2.1.0/include")
 endif()
@@ -87,7 +89,7 @@ else()
     # On Linux, link with system SDL2 libraries and local ImGui
     target_link_libraries(Kosmos PRIVATE 
         ${DOTBLUE_BUILD_DIR}/libDotBlue.so
-        SDL2
+        ${SDL2_LIBRARIES}
         SDL2_mixer
         GL
         GLEW
