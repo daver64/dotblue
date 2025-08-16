@@ -1,8 +1,3 @@
-
-#include <windows.h>
-
-// Ensure hwnd is declared before use in GetRenderWindowSize
-
 // platform_win32.cpp
 #ifdef _WIN32
 #include <DotBlue/DotBlue.h>
