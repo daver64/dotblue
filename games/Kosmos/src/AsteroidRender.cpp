@@ -135,7 +135,7 @@ void AsteroidRender::render(const Asteroid& asteroid, const DotBlue::GLTextureAt
     voxelShader.bind();
     voxelShader.setMat4("u_mvp", glm::mat4(viewProj));
     voxelShader.setVec3("u_lightDir", lightDir.x, lightDir.y, lightDir.z);
-    voxelShader.setFloat("u_ambient", 0.25f);
+    voxelShader.setFloat("u_ambient", 0.3125f);
         atlas.bind();
     voxelShader.setInt("u_tex", 0);
 
