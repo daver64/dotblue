@@ -84,13 +84,13 @@ public:
         // Create asteroid at world origin
         asteroid = new Asteroid(8, 8, 8, 42); // 8x8x8 chunks (128^3 voxels), seed=42
 
-        // Place camera at (0,0,-32) looking at center (0,0,0)
-        camera.setPosition(glm::dvec3(0.0, 0.0, -32.0));
-        camera.setTarget(glm::dvec3(0.0, 0.0, 0.0));
-        camera.setUp(glm::dvec3(0.0, 1.0, 0.0));
-        camera.setFOV(60.0);
-        camera.setAspect(16.0 / 9.0);
-        camera.setNearFar(0.1, 1000.0);
+    // Place camera at (0,0,-80) looking at center (0,0,0) for a better view
+    camera.setPosition(glm::dvec3(0.0, 0.0, -80.0));
+    camera.setTarget(glm::dvec3(0.0, 0.0, 0.0));
+    camera.setUp(glm::dvec3(0.0, 1.0, 0.0));
+    camera.setFOV(70.0); // Slightly wider FOV
+    camera.setAspect(16.0 / 9.0);
+    camera.setNearFar(0.1, 1000.0);
 
         // Load texture atlas (mc.png, 16x16 tiles)
         atlas = new DotBlue::GLTextureAtlas("mc.png", 16, 16);
@@ -101,7 +101,40 @@ public:
 
     void Update(float deltaTime) override
     {
-        // Future: camera movement, input, etc.
+        // Basic camera movement: WASD/arrow keys
+        double speed = 40.0 * deltaTime;
+        glm::dvec3 forward = glm::normalize(camera.getTarget() - camera.getPosition());
+        glm::dvec3 right = glm::normalize(glm::cross(forward, camera.getUp()));
+        glm::dvec3 up = camera.getUp();
+        bool moved = false;
+#ifdef _WIN32
+        if (GetAsyncKeyState('W') & 0x8000) { camera.setPosition(camera.getPosition() + forward * speed); camera.setTarget(camera.getTarget() + forward * speed); moved = true; }
+        if (GetAsyncKeyState('S') & 0x8000) { camera.setPosition(camera.getPosition() - forward * speed); camera.setTarget(camera.getTarget() - forward * speed); moved = true; }
+        if (GetAsyncKeyState('A') & 0x8000) { camera.setPosition(camera.getPosition() - right * speed); camera.setTarget(camera.getTarget() - right * speed); moved = true; }
+        if (GetAsyncKeyState('D') & 0x8000) { camera.setPosition(camera.getPosition() + right * speed); camera.setTarget(camera.getTarget() + right * speed); moved = true; }
+        if (GetAsyncKeyState(VK_UP) & 0x8000) { camera.setPosition(camera.getPosition() + up * speed); camera.setTarget(camera.getTarget() + up * speed); moved = true; }
+        if (GetAsyncKeyState(VK_DOWN) & 0x8000) { camera.setPosition(camera.getPosition() - up * speed); camera.setTarget(camera.getTarget() - up * speed); moved = true; }
+        if (GetAsyncKeyState(VK_LEFT) & 0x8000) {
+            // Orbit left
+            glm::dmat4 rot = glm::rotate(glm::dmat4(1.0), glm::radians(1.5), up);
+            glm::dvec3 dir = camera.getTarget() - camera.getPosition();
+            dir = glm::vec3(rot * glm::dvec4(dir, 0.0));
+            camera.setTarget(camera.getPosition() + dir);
+            moved = true;
+        }
+        if (GetAsyncKeyState(VK_RIGHT) & 0x8000) {
+            // Orbit right
+            glm::dmat4 rot = glm::rotate(glm::dmat4(1.0), glm::radians(-1.5), up);
+            glm::dvec3 dir = camera.getTarget() - camera.getPosition();
+            dir = glm::vec3(rot * glm::dvec4(dir, 0.0));
+            camera.setTarget(camera.getPosition() + dir);
+            moved = true;
+        }
+#endif
+        //if (moved) {
+        //    // Optionally print camera position for debugging
+       //     std::cerr << "[Camera] Pos: " << camera.getPosition().x << ", " << camera.getPosition().y << ", " << camera.getPosition().z << std::endl;
+       // }
     }
 
     void Render() override
@@ -116,7 +149,7 @@ public:
         glm::dmat4 view = camera.getViewMatrix();
         glm::dmat4 proj = glm::perspective(glm::radians(camera.getFOV()), camera.getAspect(), camera.getNear(), camera.getFar());
         glm::dmat4 viewProj = proj * view;
-        glm::vec3 lightDir = glm::normalize(glm::vec3(1.0f, 1.0f, 1.0f));
+    glm::vec3 lightDir = glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f));
         AsteroidRender::render(*asteroid, *atlas, viewProj, lightDir);
 
        // RenderUI();
@@ -148,7 +181,7 @@ public:
 
     void HandleInput(const DotBlue::InputManager &input, const DotBlue::InputBindings &bindings) override
     {
-        // Implement camera controls/input here in the future
+    // (Optional: could add input handling here for non-Windows platforms)
     }
 
     void Shutdown() override

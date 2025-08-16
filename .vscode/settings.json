@@ -2,7 +2,8 @@
     "files.associations": {
         "xiosbase": "cpp",
         "vector": "cpp",
-        "*.rh": "cpp"
+        "*.rh": "cpp",
+        "random": "cpp"
     },
     "terminal.integrated.defaultProfile.windows": "PowerShell",
     "terminal.integrated.profiles.windows": {

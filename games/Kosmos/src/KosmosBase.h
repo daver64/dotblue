@@ -146,7 +146,6 @@ public:
     void setVoxel(int wx, int wy, int wz, VoxelType type, uint8_t data = 0);
     void generate(uint32_t seed);
     void generateChunkMesh(int cx, int cy, int cz);
-    void render(const DotBlue::GLTextureAtlas& atlas, const glm::dmat4& viewProj);
 };
 class AsteroidRender {
 public:
