@@ -4,11 +4,12 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/include",
-                "${workspaceFolder}/DotBlue",
-                "${workspaceFolder}/games/kosmos/include",
+                "${workspaceFolder}/include/DotBlue",
+                "${workspaceFolder}/imgui",
                 "C:/Users/daver/LocalApps/SDL2-2.32.6/include",
                 "C:/Users/daver/LocalApps/SDL2_mixer-2.8.1/include",
-                "C:/Users/daver/LocalApps/glew-2.1.0/include"
+                "C:/Users/daver/LocalApps/glew-2.1.0/include",
+                "C:/Users/daver/LocalApps/glm-1.0.1"
             ],
             "defines": [
                 "_DEBUG",
