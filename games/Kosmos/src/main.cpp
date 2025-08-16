@@ -1,17 +1,27 @@
 #include <atomic>
+#include <iostream>
 #define SDL_MAIN_HANDLED // Prevent SDL from redefining main
 #include "KosmosBase.h"
 #include "DotBlue/DotBlue.h"
 #include "DotBlue/GLPlatform.h"
 // Global pointer to the running flag for quitting from event handler
-std::atomic<bool>* g_running_flag = nullptr;
+std::atomic<bool> *g_running_flag = nullptr;
+
+// Stop function to quit the main loop (all platforms)
+void Stop()
+{
+    if (g_running_flag)
+    {
+        *g_running_flag = false;
+    std::cerr << "[Stop] g_running_flag set to false" << std::endl;
+    }
+}
 
 // Global pointer for mesh UVs (must be after GLPlatform.h)
-DotBlue::GLTextureAtlas* g_atlas_for_mesh = nullptr;
+DotBlue::GLTextureAtlas *g_atlas_for_mesh = nullptr;
 class Kosmos;
 // Global pointer to current Kosmos instance for event handling (must be at file scope for linker)
-Kosmos* g_kosmos_instance = nullptr;
-
+Kosmos *g_kosmos_instance = nullptr;
 
 // Include ImGui headers
 #include "imgui.h"
@@ -64,7 +74,12 @@ private:
 #define KOSMOS_RENDER_IMPLEMENTED
 public:
     double camYaw = 0.0, camPitch = 0.0;
-    Kosmos() { g_kosmos_instance = this; std::cerr << "[Kosmos] Constructor called." << std::endl; std::cerr.flush(); }
+    Kosmos()
+    {
+        g_kosmos_instance = this;
+        std::cerr << "[Kosmos] Constructor called." << std::endl;
+        std::cerr.flush();
+    }
     ~Kosmos()
     {
         delete asteroid;
@@ -75,6 +90,7 @@ public:
 
     void Render() override
     {
+    // ...removed debug logging...
         // Minimal implementation to satisfy abstract base class
     }
 
@@ -99,24 +115,23 @@ public:
         ImGui_ImplOpenGL3_Init("#version 130");
         showKosmosUI = true;
 
+        // Load texture atlas (mc.png, 16x16 tiles)
+        atlas = new DotBlue::GLTextureAtlas("../assets/mc.png", 16, 16);
+        g_atlas_for_mesh = atlas;
+        atlas->select(0); // Select the first tile for all faces
 
-    // Load texture atlas (mc.png, 16x16 tiles)
-    atlas = new DotBlue::GLTextureAtlas("../assets/mc.png", 16, 16);
-    g_atlas_for_mesh = atlas;
-    atlas->select(0); // Select the first tile for all faces
+        // Create asteroid at world origin
+        asteroid = new Asteroid(8, 8, 8, 42); // 8x8x8 chunks (128^3 voxels), seed=42
 
-    // Create asteroid at world origin
-    asteroid = new Asteroid(8, 8, 8, 42); // 8x8x8 chunks (128^3 voxels), seed=42
-
-    // Place camera at (0,0,-80) looking at center (0,0,0) for a better view
-    camera.setPosition(glm::dvec3(0.0, 0.0, -80.0));
-    camYaw = 0.0;
-    camPitch = 0.0;
-    camera.setTarget(glm::dvec3(0.0, 0.0, 0.0));
-    camera.setUp(glm::dvec3(0.0, 1.0, 0.0));
-    camera.setFOV(70.0); // Slightly wider FOV
-    camera.setAspect(16.0 / 9.0);
-    camera.setNearFar(0.1, 1000.0);
+        // Place camera at (0,0,-80) looking at center (0,0,0) for a better view
+        camera.setPosition(glm::dvec3(0.0, 0.0, -80.0));
+        camYaw = 0.0;
+        camPitch = 0.0;
+        camera.setTarget(glm::dvec3(0.0, 0.0, 0.0));
+        camera.setUp(glm::dvec3(0.0, 1.0, 0.0));
+        camera.setFOV(70.0); // Slightly wider FOV
+        camera.setAspect(16.0 / 9.0);
+        camera.setNearFar(0.1, 1000.0);
 
         // AsteroidRender is just a static class, no need to instantiate
         return true;
@@ -124,7 +139,8 @@ public:
 
     void Update(float deltaTime) override
     {
-    // ...existing code...
+    // ...removed debug logging...
+        // ...existing code...
         // --- Mouse look (yaw/pitch) and camera collision ---
         double speed = 40.0 * deltaTime;
         double mouseSensitivity = 0.15; // Adjust as needed
@@ -137,21 +153,24 @@ public:
         DotBlue::GetRenderWindowSize(width, height);
         int centerX = width / 2;
         int centerY = height / 2;
-        Display* display = (Display*)DotBlue::GetX11Display();
+        Display *display = (Display *)DotBlue::GetX11Display();
         Window window = (Window)DotBlue::GetX11Window();
-        if (display && window) {
+        if (display && window)
+        {
             Window root_return, child_return;
             int root_x, root_y, win_x, win_y;
             unsigned int mask_return;
             XQueryPointer(display, window, &root_return, &child_return, &root_x, &root_y, &win_x, &win_y, &mask_return);
-            if (lastMouseX != -1 && lastMouseY != -1) {
+            if (lastMouseX != -1 && lastMouseY != -1)
+            {
                 accumDX += win_x - lastMouseX;
                 accumDY += win_y - lastMouseY;
             }
             lastMouseX = win_x;
             lastMouseY = win_y;
             // Warp pointer to center if not already there
-            if (win_x != centerX || win_y != centerY) {
+            if (win_x != centerX || win_y != centerY)
+            {
                 XWarpPointer(display, None, window, 0, 0, 0, 0, centerX, centerY);
                 XFlush(display);
                 lastMouseX = centerX;
@@ -167,15 +186,17 @@ public:
         double pitchRad = 0.0;
         glm::dvec3 forward(0.0, 0.0, 1.0);
         glm::dvec3 worldUp(0.0, 1.0, 0.0);
-    auto canMoveTo = [&](const glm::dvec3 &pos)
-    {
-        int wx = int(std::round(pos.x));
-        int wy = int(std::round(pos.y));
-        int wz = int(std::round(pos.z));
-        Voxel *v = asteroid->getVoxel(wx, wy, wz);
-        return (!v || v->type == VoxelType::Empty);
-    };
-    // --- Mouse input and clamp to center ---
+        auto canMoveTo = [&](const glm::dvec3 &pos)
+        {
+            int wx = int(std::round(pos.x));
+            int wy = int(std::round(pos.y));
+            int wz = int(std::round(pos.z));
+            Voxel *v = asteroid->getVoxel(wx, wy, wz);
+            bool canMove = (!v || v->type == VoxelType::Empty);
+            // ...removed debug logging...
+            return canMove;
+        };
+        // --- Mouse input and clamp to center ---
 #ifdef _WIN32
         // Get window handle and size
         HWND hwnd = static_cast<HWND>(DotBlue::GetWindowHandle());
@@ -210,17 +231,17 @@ public:
             mouseDX = 0;
             mouseDY = 0;
         }
- #endif //(removed extra #endif to fix preprocessor error)
-        // Quit on Escape
+#endif //(removed extra #endif to fix preprocessor error)
+       // Quit on Escape
 #ifdef _WIN32
         if (GetAsyncKeyState(VK_ESCAPE) & 0x8000)
         {
             Stop();
-            return;
+            PostQuitMessage(0); // Graceful quit
         }
 #endif
-    camYaw += mouseDX * mouseSensitivity;
-    camPitch -= mouseDY * mouseSensitivity;
+        camYaw += mouseDX * mouseSensitivity;
+        camPitch -= mouseDY * mouseSensitivity;
         // Clamp pitch to avoid flipping
         if (camPitch > 89.0)
             camPitch = 89.0;
@@ -236,103 +257,153 @@ public:
         worldUp = glm::dvec3(0, 1, 0);
         glm::dvec3 right = glm::normalize(glm::cross(forward, worldUp));
 
-    bool moved = false;
+        bool moved = false;
         glm::dvec3 camPos = camera.getPosition();
-        #ifdef _WIN32
+#ifdef _WIN32
         if (GetAsyncKeyState('W') & 0x8000)
         {
+            // ...removed debug logging...
             glm::dvec3 newPos = camPos + forward * speed;
-            if (canMoveTo(newPos)) {
+            if (canMoveTo(newPos))
+            {
                 camPos = newPos;
+                // ...removed debug logging...
                 moved = true;
             }
         }
         if (GetAsyncKeyState('S') & 0x8000)
         {
+            // ...removed debug logging...
             glm::dvec3 newPos = camPos - forward * speed;
-            if (canMoveTo(newPos)) {
+            if (canMoveTo(newPos))
+            {
                 camPos = newPos;
+                // ...removed debug logging...
                 moved = true;
             }
         }
         if (GetAsyncKeyState('A') & 0x8000)
         {
+            // ...removed debug logging...
             glm::dvec3 newPos = camPos - right * speed;
-            if (canMoveTo(newPos)) {
+            if (canMoveTo(newPos))
+            {
                 camPos = newPos;
+                // ...removed debug logging...
                 moved = true;
             }
         }
         if (GetAsyncKeyState('D') & 0x8000)
         {
+            // ...removed debug logging...
             glm::dvec3 newPos = camPos + right * speed;
-            if (canMoveTo(newPos)) {
+            if (canMoveTo(newPos))
+            {
                 camPos = newPos;
+                // ...removed debug logging...
                 moved = true;
             }
         }
         if (GetAsyncKeyState(VK_UP) & 0x8000)
         {
+            // ...removed debug logging...
             glm::dvec3 newPos = camPos + worldUp * speed;
-            if (canMoveTo(newPos)) {
+            if (canMoveTo(newPos))
+            {
                 camPos = newPos;
                 moved = true;
             }
         }
         if (GetAsyncKeyState(VK_DOWN) & 0x8000)
         {
+            // ...removed debug logging...
             glm::dvec3 newPos = camPos - worldUp * speed;
-            if (canMoveTo(newPos)) {
+            if (canMoveTo(newPos))
+            {
                 camPos = newPos;
                 moved = true;
             }
         }
-        #else
+#else
         // X11 keyboard movement for Linux
         char keys[32];
-        if (display && window) {
+        if (display && window)
+        {
             XQueryKeymap(display, keys);
-            auto isKeyDown = [&](KeySym ks) {
+            auto isKeyDown = [&](KeySym ks)
+            {
                 KeyCode kc = XKeysymToKeycode(display, ks);
                 return (keys[kc >> 3] & (1 << (kc & 7))) != 0;
             };
-            if (isKeyDown(XK_w)) {
+            if (isKeyDown(XK_w))
+            {
                 glm::dvec3 newPos = camPos + forward * speed;
-                if (canMoveTo(newPos)) { camPos = newPos; moved = true; }
+                if (canMoveTo(newPos))
+                {
+                    camPos = newPos;
+                    moved = true;
+                }
             }
-            if (isKeyDown(XK_s)) {
+            if (isKeyDown(XK_s))
+            {
                 glm::dvec3 newPos = camPos - forward * speed;
-                if (canMoveTo(newPos)) { camPos = newPos; moved = true; }
+                if (canMoveTo(newPos))
+                {
+                    camPos = newPos;
+                    moved = true;
+                }
             }
-            if (isKeyDown(XK_a)) {
+            if (isKeyDown(XK_a))
+            {
                 glm::dvec3 newPos = camPos - right * speed;
-                if (canMoveTo(newPos)) { camPos = newPos; moved = true; }
+                if (canMoveTo(newPos))
+                {
+                    camPos = newPos;
+                    moved = true;
+                }
             }
-            if (isKeyDown(XK_d)) {
+            if (isKeyDown(XK_d))
+            {
                 glm::dvec3 newPos = camPos + right * speed;
-                if (canMoveTo(newPos)) { camPos = newPos; moved = true; }
+                if (canMoveTo(newPos))
+                {
+                    camPos = newPos;
+                    moved = true;
+                }
             }
-            if (isKeyDown(XK_Up)) {
+            if (isKeyDown(XK_Up))
+            {
                 glm::dvec3 newPos = camPos + worldUp * speed;
-                if (canMoveTo(newPos)) { camPos = newPos; moved = true; }
+                if (canMoveTo(newPos))
+                {
+                    camPos = newPos;
+                    moved = true;
+                }
             }
-            if (isKeyDown(XK_Down)) {
+            if (isKeyDown(XK_Down))
+            {
                 glm::dvec3 newPos = camPos - worldUp * speed;
-                if (canMoveTo(newPos)) { camPos = newPos; moved = true; }
+                if (canMoveTo(newPos))
+                {
+                    camPos = newPos;
+                    moved = true;
+                }
             }
         }
-        if (moved) {
+#endif
+        if (moved)
+        {
             camera.setPosition(camPos);
+            // ...removed debug logging...
         }
-        #endif
-            // After movement, always recalculate forward and set target
-            forward = glm::dvec3(
-                cos(pitchRad) * cos(yawRad),
-                sin(pitchRad),
-                cos(pitchRad) * sin(yawRad));
-            camera.setTarget(camera.getPosition() + forward);
-            camera.setUp(worldUp);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // After movement, always recalculate forward and set target
+        forward = glm::dvec3(
+            cos(pitchRad) * cos(yawRad),
+            sin(pitchRad),
+            cos(pitchRad) * sin(yawRad));
+        camera.setTarget(camera.getPosition() + forward);
+        camera.setUp(worldUp);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glEnable(GL_DEPTH_TEST);
 
@@ -399,22 +470,25 @@ static long HandleWindowMessage(void *hwnd, unsigned int msg, unsigned long long
     WPARAM wp = static_cast<WPARAM>(wParam);
     LPARAM lp = static_cast<LPARAM>(lParam);
 
+    // Handle quit messages
+    if (uMsg == 0x0010 /* WM_CLOSE */ || uMsg == 0x0002 /* WM_DESTROY */) {
+        Stop();
+    }
+
     // Let ImGui handle the message
     LRESULT result = ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wp, lp);
 
     // Return the result directly as a long
     return static_cast<long>(result);
 }
-    
+
 #elif defined(__linux__) || defined(__FreeBSD__)
 // X11 event handler for ImGui input
 static void HandleX11Event(void *xevent)
 {
-    extern Kosmos* g_kosmos_instance;
+    extern Kosmos *g_kosmos_instance;
     XEvent *xev = static_cast<XEvent *>(xevent);
     ImGuiIO &io = ImGui::GetIO();
-
-
 
     switch (xev->type)
     {
@@ -467,7 +541,8 @@ static void HandleX11Event(void *xevent)
                 break;
             case XK_Escape:
                 imgui_key = ImGuiKey_Escape;
-                if (g_running_flag) *g_running_flag = false;
+                if (g_running_flag)
+                    *g_running_flag = false;
                 break;
             case XK_BackSpace:
                 imgui_key = ImGuiKey_Backspace;
@@ -579,19 +654,24 @@ static void HandleX11Event(void *xevent) {}
 
 // Custom main to set g_running_flag and call DotBlue entry point
 #include <atomic>
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
     std::cerr << "[main] Starting main()" << std::endl;
     std::atomic<bool> running(true);
     g_running_flag = &running;
     Kosmos kosmos; // Ensure the game instance is created!
     // Register Kosmos methods with the engine
     DotBlue::SetGameCallbacks(
-        [&kosmos]() { return kosmos.Initialize(); },
-        [&kosmos](float dt) { kosmos.Update(dt); },
-        [&kosmos]() { kosmos.Render(); },
-        [&kosmos]() { kosmos.Shutdown(); },
-        [&kosmos](const DotBlue::InputManager& input, const DotBlue::InputBindings& bindings) { kosmos.HandleInput(input, bindings); }
-    );
+        [&kosmos]()
+        { return kosmos.Initialize(); },
+        [&kosmos](float dt)
+        { kosmos.Update(dt); },
+        [&kosmos]()
+        { kosmos.Render(); },
+        [&kosmos]()
+        { kosmos.Shutdown(); },
+        [&kosmos](const DotBlue::InputManager &input, const DotBlue::InputBindings &bindings)
+        { kosmos.HandleInput(input, bindings); });
     std::cerr << "[main] running flag set, calling RunGameSmooth" << std::endl;
     DotBlue::RunGameSmooth(running);
     std::cerr << "[main] Exiting main()" << std::endl;

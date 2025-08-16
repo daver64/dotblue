@@ -3,7 +3,8 @@
         "xiosbase": "cpp",
         "vector": "cpp",
         "*.rh": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "xstring": "cpp"
     },
     "terminal.integrated.defaultProfile.windows": "PowerShell",
     "terminal.integrated.profiles.windows": {
